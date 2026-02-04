@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>Kaizoku</Name>
-  <Repository>ghcr.io/quickkill0/kaizoku.net:main</Repository>
-  <Registry>https://github.com/Quickkill0/Kaizoku.NET/pkgs/container/kaizoku.net</Registry>
+  <Repository>ghcr.io/quickkill0/kaizoku:main</Repository>
+  <Registry>https://github.com/Quickkill0/Kaizoku/pkgs/container/kaizoku</Registry>
   <Branch>
     <Tag>main</Tag>
     <TagDescription>Latest stable release from main branch</TagDescription>
@@ -11,8 +11,8 @@
   <MyIP/>
   <Shell>bash</Shell>
   <Privileged>false</Privileged>
-  <Support>https://github.com/Quickkill0/Kaizoku.NET/issues</Support>
-  <Project>https://github.com/Quickkill0/Kaizoku.NET</Project>
+  <Support>https://github.com/Quickkill0/Kaizoku/issues</Support>
+  <Project>https://github.com/Quickkill0/Kaizoku</Project>
   <Overview>Kaizoku is a manga management application that integrates with Suwayomi Server to download and organize manga from various sources. It provides a web interface for managing your manga library, automatic downloads, and organization features.&#xD;
 &#xD;
 Features:&#xD;
@@ -26,8 +26,8 @@ Ports:&#xD;
 - 4567: Suwayomi Server (internal)</Overview>
   <Category>MediaApp:Other</Category>
   <WebUI>http://[IP]:[PORT:9833]</WebUI>
-  <TemplateURL>https://raw.githubusercontent.com/Quickkill0/Kaizoku.NET/main/unraid/kaizoku.xml</TemplateURL>
-  <Icon>https://raw.githubusercontent.com/Quickkill0/Kaizoku.NET/main/KaizokuFrontend/public/kaizoku-logo.png</Icon>
+  <TemplateURL>https://raw.githubusercontent.com/Quickkill0/Kaizoku/main/unraid/kaizoku.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/Quickkill0/Kaizoku/main/KaizokuFrontend/public/kaizoku-logo.png</Icon>
   <ExtraParams>--restart unless-stopped --gpus all</ExtraParams>
   <PostArgs/>
   <CPUset/>
