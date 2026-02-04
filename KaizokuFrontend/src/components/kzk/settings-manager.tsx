@@ -32,6 +32,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { NamingFormatSection } from './settings-sections/naming-format-section';
 
 // Helper functions
 const isValidUrl = (url: string): boolean => {
@@ -753,6 +754,12 @@ const AVAILABLE_SECTIONS: SettingsSection[] = [
     title: 'Storage',
     description: 'Configure how archives are stored and organized.',
     component: StorageSection,
+  },
+  {
+    id: 'naming-format',
+    title: 'Naming & Format',
+    description: 'Configure file naming templates and output format.',
+    component: NamingFormatSection,
   },
   {
     id: 'flaresolverr',

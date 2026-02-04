@@ -266,9 +266,15 @@ namespace KaizokuBackend.Services.Settings
                 FlareSolverrSessionTtl = settings.FlareSolverrSessionTtl,
                 FlareSolverrAsResponseFallback = settings.FlareSolverrAsResponseFallback,
                 IsWizardSetupComplete = settings.IsWizardSetupComplete,
-                WizardSetupStepCompleted = settings.WizardSetupStepCompleted
+                WizardSetupStepCompleted = settings.WizardSetupStepCompleted,
+                FileNameTemplate = settings.FileNameTemplate,
+                FolderTemplate = settings.FolderTemplate,
+                ChapterPadding = settings.ChapterPadding,
+                VolumePadding = settings.VolumePadding,
+                OutputFormat = settings.OutputFormat,
+                IncludeChapterTitle = settings.IncludeChapterTitle
             };
-            
+
             await SaveSettingsAsync(editableSettings, force, token).ConfigureAwait(false);
         }
         
@@ -294,7 +300,13 @@ namespace KaizokuBackend.Services.Settings
                 FlareSolverrSessionTtl = ed.FlareSolverrSessionTtl,
                 FlareSolverrAsResponseFallback = ed.FlareSolverrAsResponseFallback,
                 IsWizardSetupComplete = ed.IsWizardSetupComplete,
-                WizardSetupStepCompleted = ed.WizardSetupStepCompleted
+                WizardSetupStepCompleted = ed.WizardSetupStepCompleted,
+                FileNameTemplate = ed.FileNameTemplate,
+                FolderTemplate = ed.FolderTemplate,
+                ChapterPadding = ed.ChapterPadding,
+                VolumePadding = ed.VolumePadding,
+                OutputFormat = ed.OutputFormat,
+                IncludeChapterTitle = ed.IncludeChapterTitle
             };
             set.StorageFolder = _config["StorageFolder"] ?? string.Empty;
             return set;

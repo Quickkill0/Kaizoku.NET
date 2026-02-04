@@ -93,8 +93,9 @@ namespace KaizokuBackend
             services.AddJobServices();
             services.AddProviderServices();
             services.AddSearchServices();
-            services.AddDownloadServices(); 
+            services.AddDownloadServices();
             services.AddHelperServices();
+            services.AddNamingServices();
 
             
 

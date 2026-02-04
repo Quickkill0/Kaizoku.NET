@@ -5,6 +5,8 @@ using KaizokuBackend.Services.Jobs;
 using KaizokuBackend.Services.Jobs.Models;
 using KaizokuBackend.Services.Jobs.Report;
 using KaizokuBackend.Services.Helpers;
+using KaizokuBackend.Services.Archives;
+using KaizokuBackend.Services.Naming;
 using KaizokuBackend.Utils;
 using Microsoft.EntityFrameworkCore;
 using SharpCompress.Common;
@@ -27,6 +29,8 @@ namespace KaizokuBackend.Services.Downloads
         private readonly SettingsService _settings;
         private readonly JobManagementService _jobManagementService;
         private readonly JobHubReportService _reportingService;
+        private readonly ITemplateParser _templateParser;
+        private readonly ArchiveWriterFactory _archiveWriterFactory;
         private readonly string _tempFolder;
         private readonly ILogger<DownloadCommandService> _logger;
         private static readonly KeyedAsyncLock _seriesLock = new KeyedAsyncLock();
@@ -38,6 +42,8 @@ namespace KaizokuBackend.Services.Downloads
             SettingsService settings,
             JobManagementService jobManagementService,
             JobHubReportService reportingService,
+            ITemplateParser templateParser,
+            ArchiveWriterFactory archiveWriterFactory,
             IConfiguration config,
             ILogger<DownloadCommandService> logger)
         {
@@ -46,6 +52,8 @@ namespace KaizokuBackend.Services.Downloads
             _settings = settings;
             _jobManagementService = jobManagementService;
             _reportingService = reportingService;
+            _templateParser = templateParser;
+            _archiveWriterFactory = archiveWriterFactory;
             _logger = logger;
             _tempFolder = Path.Combine(config["runtimeDirectory"] ?? "", "Downloads");
         }
@@ -114,14 +122,35 @@ namespace KaizokuBackend.Services.Downloads
             if (p != null)
                 maxChap = p.Chapters.Max(c => c.Number);
 
-            string zipFile = ArchiveHelperService.MakeFileNameSafe(ch.ProviderName, ch.Scanlator, ch.SeriesTitle, ch.Language, ch.Chapter.ChapterNumber, rchap, maxChap) + ".cbz";
+            // Determine output format from settings
+            ArchiveFormat outputFormat = (ArchiveFormat)appSettings.OutputFormat;
+            string fileExtension = ArchiveWriterFactory.GetExtension(outputFormat);
+
+            // Build template variables for file naming
+            TemplateVariables templateVars = new TemplateVariables(
+                Series: ch.SeriesTitle,
+                Chapter: ch.Chapter.ChapterNumber,
+                Volume: null, // Volume info not available in ChapterDownload
+                Provider: ch.ProviderName,
+                Scanlator: ch.Scanlator,
+                Language: ch.Language,
+                Title: appSettings.IncludeChapterTitle ? rchap : null,
+                UploadDate: ch.ComicUploadDateUTC,
+                Type: ch.Type,
+                MaxChapter: maxChap
+            );
+
+            // Generate file name from template
+            string baseFileName = _templateParser.ParseFileName(appSettings.FileNameTemplate, templateVars, appSettings);
+            string archiveFile = baseFileName + fileExtension;
+
             string message = $"Downloading ({providerName}) {ch.Title} {chapterName}...";
             reporter.Report(ProgressStatus.Started, 0, message, dci);
 
             float step = 100 / (float)(ch.PageCount);
             float acum = 0;
             int page = 0;
-            string tempZipPath = Path.Combine(_tempFolder, zipFile);
+            string tempArchivePath = Path.Combine(_tempFolder, archiveFile);
             bool breaked = false;
 
             try
@@ -137,11 +166,11 @@ namespace KaizokuBackend.Services.Downloads
                     _directoryLock.Release();
                 }
 
-                if (File.Exists(tempZipPath))
-                    File.Delete(tempZipPath);
+                if (File.Exists(tempArchivePath))
+                    File.Delete(tempArchivePath);
 
-                using (var zipStream = File.OpenWrite(tempZipPath))
-                using (var zipWriter = WriterFactory.Open(zipStream, ArchiveType.Zip, CompressionType.None))
+                await using (var archiveStream = File.OpenWrite(tempArchivePath))
+                await using (var archiveWriter = _archiveWriterFactory.Create(outputFormat, archiveStream))
                 {
                     while (true)
                     {
@@ -174,9 +203,10 @@ namespace KaizokuBackend.Services.Downloads
                                     break;
                                 }
 
-                                string fileName = ArchiveHelperService.MakeFileNameSafe(ch.ProviderName, ch.Scanlator, ch.SeriesTitle, ch.Language,
-                                    ch.Chapter.ChapterNumber, ch.ChapterName, maxChap, page + 1, ch.PageCount) + ext;
-                                zipWriter.Write(fileName, ms);
+                                // Generate page file name with padding
+                                int pageLength = ch.PageCount.ToString().Length;
+                                string pageFileName = $"{(page + 1).ToString().PadLeft(pageLength, '0')}{ext}";
+                                await archiveWriter.WriteEntryAsync(pageFileName, ms, token).ConfigureAwait(false);
                                 page++;
                                 acum += step;
                                 message = $"Downloading ({providerName}) {ch.Title} {chapterName} {page}";
@@ -203,10 +233,12 @@ namespace KaizokuBackend.Services.Downloads
 
                     if (!breaked)
                     {
+                        // Write ComicInfo.xml (will be skipped for PDF format)
                         using (Stream comicInfo = ArchiveHelperService.CreateComicInfo(ch, page).ToStream())
                         {
-                            ((ZipWriter)zipWriter).Write("ComicInfo.xml", comicInfo, new ZipWriterEntryOptions { CompressionType = CompressionType.Deflate, ModificationDateTime = DateTime.Now });
+                            await archiveWriter.WriteEntryAsync("ComicInfo.xml", comicInfo, token).ConfigureAwait(false);
                         }
+                        await archiveWriter.FinalizeAsync(token).ConfigureAwait(false);
                     }
                 }
 
@@ -214,11 +246,11 @@ namespace KaizokuBackend.Services.Downloads
                 {
                     try
                     {
-                        File.Delete(tempZipPath);
+                        File.Delete(tempArchivePath);
                     }
                     catch (Exception e)
                     {
-                        _logger.LogError(e, "Failed to delete temporary zip file {TempZipPath}", tempZipPath);
+                        _logger.LogError(e, "Failed to delete temporary archive file {TempArchivePath}", tempArchivePath);
                     }
                     reporter.Report(ProgressStatus.Failed, (int)acum, message, dci);
                     return await RescheduleDownloadAsync(ch, token).ConfigureAwait(false);
@@ -228,14 +260,14 @@ namespace KaizokuBackend.Services.Downloads
                 if (!Directory.Exists(dirPath))
                     Directory.CreateDirectory(dirPath);
 
-                string finalPath = Path.Combine(dirPath, zipFile);
+                string finalPath = Path.Combine(dirPath, archiveFile);
                 try
                 {
-                    await Task.Run(() => File.Move(tempZipPath, finalPath, true), token).ConfigureAwait(false);
+                    await Task.Run(() => File.Move(tempArchivePath, finalPath, true), token).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError(e, "Failed to move downloaded file from {TempZipPath} to {FinalPath}", tempZipPath, finalPath);
+                    _logger.LogError(e, "Failed to move downloaded file from {TempArchivePath} to {FinalPath}", tempArchivePath, finalPath);
                     reporter.Report(ProgressStatus.Failed, (int)acum, message, dci);
                     return await RescheduleDownloadAsync(ch, token).ConfigureAwait(false);
                 }
@@ -264,7 +296,7 @@ namespace KaizokuBackend.Services.Downloads
                     cha.Number = ch.Chapter.ChapterNumber;
                     cha.DownloadDate = DateTime.UtcNow;
                     cha.ProviderUploadDate = ch.ComicUploadDateUTC;
-                    cha.Filename = zipFile;
+                    cha.Filename = archiveFile;
                     cha.ShouldDownload = false;
                     provider.ContinueAfterChapter = provider.Chapters.MaxNull(c => c.Number);
                     provider.ChapterCount = provider.Chapters.Count;
@@ -310,11 +342,11 @@ namespace KaizokuBackend.Services.Downloads
             }
             catch (Exception e)
             {
-                if (File.Exists(tempZipPath))
+                if (File.Exists(tempArchivePath))
                 {
                     try
                     {
-                        File.Delete(tempZipPath);
+                        File.Delete(tempArchivePath);
                     }
                     catch
                     {
