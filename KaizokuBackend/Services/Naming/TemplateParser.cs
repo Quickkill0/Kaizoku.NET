@@ -122,7 +122,7 @@ public class TemplateParser : ITemplateParser
             : ParseFolderPath(template, SampleVariables, sampleSettings);
     }
 
-    private string ExpandTemplate(string template, TemplateVariables vars, Settings settings, bool isFileName)
+    private string ExpandTemplate(string template, TemplateVariables vars, SettingsModel settings, bool isFileName)
     {
         return VariablePattern.Replace(template, match =>
         {
@@ -133,7 +133,7 @@ public class TemplateParser : ITemplateParser
         });
     }
 
-    private string GetVariableValue(string varName, string? format, TemplateVariables vars, Settings settings, bool isFileName)
+    private string GetVariableValue(string varName, string? format, TemplateVariables vars, SettingsModel settings, bool isFileName)
     {
         return varName.ToLowerInvariant() switch
         {
