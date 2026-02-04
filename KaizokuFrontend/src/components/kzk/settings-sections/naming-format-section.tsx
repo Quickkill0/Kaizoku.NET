@@ -184,7 +184,7 @@ function TemplateInput({
 // Generate preview from template
 function generatePreview(
   template: string,
-  sampleData: Record<string, string>,
+  sampleData: typeof SAMPLE_DATA,
   chapterPadding: string,
   volumePadding: string,
   outputFormat: number,
