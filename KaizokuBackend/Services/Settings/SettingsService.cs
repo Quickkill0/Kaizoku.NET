@@ -412,6 +412,9 @@ namespace KaizokuBackend.Services.Settings
                                 continue;
                             }
 
+                            // Store old filename for logging before updating
+                            var oldFileName = chapter.Filename;
+
                             // Rename the file
                             File.Move(currentPath, newPath);
 
@@ -419,7 +422,7 @@ namespace KaizokuBackend.Services.Settings
                             chapter.Filename = newFileName;
                             renamedCount++;
 
-                            _logger.LogInformation("Renamed: {OldName} -> {NewName}", chapter.Filename, newFileName);
+                            _logger.LogInformation("Renamed: {OldName} -> {NewName}", oldFileName, newFileName);
                         }
                         catch (Exception ex)
                         {
