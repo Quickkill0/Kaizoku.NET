@@ -380,7 +380,7 @@ namespace KaizokuBackend.Services.Jobs
             {
                 var downloadJobs = _db.Queues.Where(j =>
                     j.JobType == JobType.Download &&
-                    (j.Status == QueueStatus.Waiting || j.Status == QueueStatus.Queued));
+                    j.Status == QueueStatus.Waiting);
                 int count = await downloadJobs.CountAsync(token).ConfigureAwait(false);
                 _db.Queues.RemoveRange(downloadJobs);
                 await _db.SaveChangesAsync(token).ConfigureAwait(false);
