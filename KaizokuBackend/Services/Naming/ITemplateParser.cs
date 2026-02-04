@@ -1,4 +1,5 @@
 using KaizokuBackend.Models;
+using SettingsModel = KaizokuBackend.Models.Settings;
 
 namespace KaizokuBackend.Services.Naming;
 
@@ -10,12 +11,12 @@ public interface ITemplateParser
     /// <summary>
     /// Parses a file name template with the given variables
     /// </summary>
-    string ParseFileName(string template, TemplateVariables vars, Settings settings);
+    string ParseFileName(string template, TemplateVariables vars, SettingsModel settings);
 
     /// <summary>
     /// Parses a folder path template with the given variables
     /// </summary>
-    string ParseFolderPath(string template, TemplateVariables vars, Settings settings);
+    string ParseFolderPath(string template, TemplateVariables vars, SettingsModel settings);
 
     /// <summary>
     /// Validates a template string

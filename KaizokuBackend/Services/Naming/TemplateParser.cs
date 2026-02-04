@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using KaizokuBackend.Extensions;
 using KaizokuBackend.Models;
+using SettingsModel = KaizokuBackend.Models.Settings;
 
 namespace KaizokuBackend.Services.Naming;
 
@@ -40,7 +41,7 @@ public class TemplateParser : ITemplateParser
     );
 
     /// <inheritdoc/>
-    public string ParseFileName(string template, TemplateVariables vars, Settings settings)
+    public string ParseFileName(string template, TemplateVariables vars, SettingsModel settings)
     {
         string result = ExpandTemplate(template, vars, settings, isFileName: true);
         result = result.ReplaceInvalidFilenameAndPathCharacters();
@@ -49,7 +50,7 @@ public class TemplateParser : ITemplateParser
     }
 
     /// <inheritdoc/>
-    public string ParseFolderPath(string template, TemplateVariables vars, Settings settings)
+    public string ParseFolderPath(string template, TemplateVariables vars, SettingsModel settings)
     {
         string result = ExpandTemplate(template, vars, settings, isFileName: false);
         // Process each path segment separately
@@ -167,7 +168,7 @@ public class TemplateParser : ITemplateParser
         return result.Replace("[", "(").Replace("]", ")");
     }
 
-    private static string FormatChapter(decimal? chapter, string? format, decimal? maxChapter, Settings settings)
+    private static string FormatChapter(decimal? chapter, string? format, decimal? maxChapter, SettingsModel settings)
     {
         if (!chapter.HasValue)
             return "";
@@ -204,7 +205,7 @@ public class TemplateParser : ITemplateParser
         }
     }
 
-    private static string FormatVolume(int? volume, string? format, Settings settings)
+    private static string FormatVolume(int? volume, string? format, SettingsModel settings)
     {
         if (!volume.HasValue)
             return "";
