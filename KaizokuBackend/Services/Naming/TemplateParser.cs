@@ -138,7 +138,7 @@ public class TemplateParser : ITemplateParser
         {
             "series" => SanitizeForTemplate(vars.Series),
             "chapter" => FormatChapter(vars.Chapter, format, vars.MaxChapter, settings),
-            "volume" => FormatVolume(vars.Volume, format),
+            "volume" => FormatVolume(vars.Volume, format, settings),
             "provider" => FormatProvider(vars.Provider, vars.Scanlator),
             "scanlator" => SanitizeForTemplate(vars.Scanlator ?? ""),
             "language" => vars.Language.ToLowerInvariant(),
@@ -172,48 +172,57 @@ public class TemplateParser : ITemplateParser
         if (!chapter.HasValue)
             return "";
 
-        string chapterStr = FormatDecimal(chapter.Value);
-
-        // Handle padding format
-        if (!string.IsNullOrEmpty(format))
-        {
-            // Format like "000" or "0000" specifies padding
-            if (format.All(c => c == '0'))
-            {
-                int paddingLength = format.Length;
-                chapterStr = chapterStr.PadLeft(paddingLength, '0');
-            }
-        }
-        else if (maxChapter.HasValue)
-        {
-            // Auto padding based on max chapter
-            int length = ((int)maxChapter.Value).ToString().Length;
-            chapterStr = chapterStr.PadLeft(length, '0');
-        }
-
-        return chapterStr;
-    }
-
-    private static string FormatVolume(int? volume, string? format)
-    {
-        if (!volume.HasValue)
-            return"";
-
-        string volumeStr = volume.Value.ToString();
-
-        // Handle padding format
+        // Determine padding length from format, settings, or max chapter
+        int paddingLength = 0;
         if (!string.IsNullOrEmpty(format) && format.All(c => c == '0'))
         {
-            int paddingLength = format.Length;
-            volumeStr = volumeStr.PadLeft(paddingLength, '0');
+            paddingLength = format.Length;
+        }
+        else if (!string.IsNullOrEmpty(settings.ChapterPadding) && settings.ChapterPadding != "auto" && settings.ChapterPadding != "0")
+        {
+            paddingLength = settings.ChapterPadding.Length;
+        }
+        else if (settings.ChapterPadding == "auto" && maxChapter.HasValue)
+        {
+            paddingLength = ((int)maxChapter.Value).ToString().Length;
+        }
+
+        // Format chapter with proper decimal handling
+        if (chapter.Value % 1 != 0)
+        {
+            // Decimal chapter (e.g., 5.5) - pad integer part only
+            int intPart = (int)chapter.Value;
+            decimal decPart = chapter.Value - intPart;
+            string intStr = paddingLength > 0 ? intPart.ToString().PadLeft(paddingLength, '0') : intPart.ToString();
+            return intStr + decPart.ToString(System.Globalization.CultureInfo.InvariantCulture).Substring(1);
         }
         else
         {
-            // Default padding for volume
-            volumeStr = volumeStr.PadLeft(2, '0');
+            // Whole number chapter
+            string intStr = ((int)chapter.Value).ToString();
+            return paddingLength > 0 ? intStr.PadLeft(paddingLength, '0') : intStr;
+        }
+    }
+
+    private static string FormatVolume(int? volume, string? format, Settings settings)
+    {
+        if (!volume.HasValue)
+            return "";
+
+        string volumeStr = volume.Value.ToString();
+
+        // Determine padding from format or settings
+        int paddingLength = 2; // Default
+        if (!string.IsNullOrEmpty(format) && format.All(c => c == '0'))
+        {
+            paddingLength = format.Length;
+        }
+        else if (!string.IsNullOrEmpty(settings.VolumePadding) && settings.VolumePadding != "0")
+        {
+            paddingLength = settings.VolumePadding.Length;
         }
 
-        return volumeStr;
+        return paddingLength > 0 ? volumeStr.PadLeft(paddingLength, '0') : volumeStr;
     }
 
     private static string FormatTitle(string? title)
