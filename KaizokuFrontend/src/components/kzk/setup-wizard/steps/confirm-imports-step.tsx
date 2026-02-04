@@ -1088,10 +1088,25 @@ export function ConfirmImportsStep({ setError, setIsLoading, setCanProgress }: C
 
   if (globalImports.length === 0) {
     return (
-      <div className="text-center space-y-4">
+      <div className="text-center space-y-6 py-8">
         <div className="text-muted-foreground">
-          Loading Series
+          No series found to import.
         </div>
+        <div className="text-sm text-muted-foreground">
+          Please go back to the previous step and select a folder containing manga/comic files, or check that your library path is correctly configured.
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => {
+            // Clear localStorage wizard state to allow fresh start
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('import-wizard-state');
+            }
+            window.location.href = '/library';
+          }}
+        >
+          Start Over
+        </Button>
       </div>
     );
   }
