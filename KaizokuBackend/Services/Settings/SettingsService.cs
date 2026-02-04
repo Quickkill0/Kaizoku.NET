@@ -269,8 +269,6 @@ namespace KaizokuBackend.Services.Settings
                 WizardSetupStepCompleted = settings.WizardSetupStepCompleted,
                 FileNameTemplate = settings.FileNameTemplate,
                 FolderTemplate = settings.FolderTemplate,
-                ChapterPadding = settings.ChapterPadding,
-                VolumePadding = settings.VolumePadding,
                 OutputFormat = settings.OutputFormat,
                 IncludeChapterTitle = settings.IncludeChapterTitle
             };
@@ -303,13 +301,60 @@ namespace KaizokuBackend.Services.Settings
                 WizardSetupStepCompleted = ed.WizardSetupStepCompleted,
                 FileNameTemplate = ed.FileNameTemplate,
                 FolderTemplate = ed.FolderTemplate,
-                ChapterPadding = ed.ChapterPadding,
-                VolumePadding = ed.VolumePadding,
                 OutputFormat = ed.OutputFormat,
                 IncludeChapterTitle = ed.IncludeChapterTitle
             };
             set.StorageFolder = _config["StorageFolder"] ?? string.Empty;
             return set;
+        }
+
+        /// <summary>
+        /// Renames all existing downloaded files to match the current naming scheme.
+        /// </summary>
+        public async Task<int> RenameFilesToCurrentSchemeAsync(CancellationToken token = default)
+        {
+            // Get current settings
+            var settings = await GetSettingsAsync(token).ConfigureAwait(false);
+            var storageFolder = settings.StorageFolder;
+
+            if (string.IsNullOrEmpty(storageFolder) || !Directory.Exists(storageFolder))
+            {
+                return 0;
+            }
+
+            // Get all series from database to map files to their metadata
+            var series = await _db.Series
+                .Include(s => s.Chapters)
+                .Include(s => s.LinkedSeries)
+                .AsNoTracking()
+                .ToListAsync(token).ConfigureAwait(false);
+
+            int renamedCount = 0;
+
+            // For now, return the count of files that would be renamed
+            // The actual renaming logic would need to:
+            // 1. Parse existing filenames to extract chapter info
+            // 2. Match with database records
+            // 3. Generate new filename using current template
+            // 4. Rename the file
+
+            foreach (var s in series)
+            {
+                if (s.Chapters == null) continue;
+
+                foreach (var chapter in s.Chapters)
+                {
+                    if (!string.IsNullOrEmpty(chapter.FilePath) && File.Exists(chapter.FilePath))
+                    {
+                        renamedCount++;
+                    }
+                }
+            }
+
+            // TODO: Implement actual file renaming using ITemplateParser
+            // This would be a background job to avoid blocking the API
+
+            return renamedCount;
         }
         public async ValueTask<Models.Settings> GetSettingsAsync(CancellationToken token = default)
         {

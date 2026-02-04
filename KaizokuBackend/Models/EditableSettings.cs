@@ -55,12 +55,6 @@ public class EditableSettings
     [JsonPropertyName("folderTemplate")]
     public string FolderTemplate { get; set; } = "{Type}/{Series}";
 
-    [JsonPropertyName("chapterPadding")]
-    public string ChapterPadding { get; set; } = "auto";
-
-    [JsonPropertyName("volumePadding")]
-    public string VolumePadding { get; set; } = "00";
-
     [JsonPropertyName("outputFormat")]
     public int OutputFormat { get; set; } = 0;
 

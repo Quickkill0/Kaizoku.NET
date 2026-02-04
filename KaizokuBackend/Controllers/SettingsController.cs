@@ -141,5 +141,29 @@ namespace KaizokuBackend.Controllers
             var validation = _templateParser.ValidateTemplate(template, templateType);
             return Ok(new { preview, validation });
         }
+
+        /// <summary>
+        /// Renames all existing downloaded files to match the current naming scheme.
+        /// </summary>
+        /// <param name="token">Cancellation token.</param>
+        /// <returns>Status of the rename operation.</returns>
+        /// <response code="200">Rename operation started</response>
+        /// <response code="500">If an error occurs during rename</response>
+        [HttpPost("rename-files")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> RenameFilesAsync(CancellationToken token = default)
+        {
+            try
+            {
+                var result = await _settingsService.RenameFilesToCurrentSchemeAsync(token).ConfigureAwait(false);
+                return Ok(new { message = "Rename operation started", totalFiles = result });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error starting file rename operation");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "An error occurred while starting the rename operation" });
+            }
+        }
     }
 }

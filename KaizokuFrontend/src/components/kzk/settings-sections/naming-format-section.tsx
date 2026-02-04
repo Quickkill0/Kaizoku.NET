@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState } from 'react';
 import { CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Loader2, FolderSync } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -13,7 +15,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { type Settings } from "@/lib/api/types";
+import { useToast } from "@/hooks/use-toast";
 
 // Sample data for preview generation
 const SAMPLE_DATA = {
@@ -34,8 +48,10 @@ const SAMPLE_DATA = {
 const FILE_NAME_VARIABLES = [
   { name: "{Series}", description: "Series title" },
   { name: "{Chapter}", description: "Chapter number" },
-  { name: "{Chapter:000}", description: "Chapter with padding" },
+  { name: "{Chapter:000}", description: "Chapter with 3-digit padding (001, 002)" },
+  { name: "{Chapter:0000}", description: "Chapter with 4-digit padding (0001, 0002)" },
   { name: "{Volume}", description: "Volume number" },
+  { name: "{Volume:00}", description: "Volume with 2-digit padding (01, 02)" },
   { name: "{Provider}", description: "Source provider" },
   { name: "{Scanlator}", description: "Scanlator group" },
   { name: "{Language}", description: "Language code" },
@@ -58,22 +74,6 @@ const FOLDER_VARIABLES = [
 const OUTPUT_FORMATS = [
   { value: "0", label: "CBZ (Comic Book ZIP)" },
   { value: "1", label: "PDF (Portable Document Format)" },
-];
-
-// Chapter padding options
-const CHAPTER_PADDING_OPTIONS = [
-  { value: "auto", label: "Auto (based on max chapter)" },
-  { value: "0", label: "None (1, 2, 10)" },
-  { value: "00", label: "2 digits (01, 02)" },
-  { value: "000", label: "3 digits (001, 002)" },
-  { value: "0000", label: "4 digits (0001, 0002)" },
-];
-
-// Volume padding options
-const VOLUME_PADDING_OPTIONS = [
-  { value: "0", label: "None (1, 2, 10)" },
-  { value: "00", label: "2 digits (01, 02)" },
-  { value: "000", label: "3 digits (001, 002)" },
 ];
 
 interface NamingFormatSectionProps {
@@ -185,8 +185,6 @@ function TemplateInput({
 function generatePreview(
   template: string,
   sampleData: typeof SAMPLE_DATA,
-  chapterPadding: string,
-  volumePadding: string,
   outputFormat: number,
   includeChapterTitle: boolean,
   isFolder: boolean = false
@@ -203,35 +201,17 @@ function generatePreview(
     result = result.replace(regex, value);
   });
 
-  // Handle Chapter padding
-  const chapterNum = parseInt(sampleData.Chapter, 10);
-  let paddedChapter = sampleData.Chapter;
+  // Handle {Chapter:XXX} padding patterns
+  result = result.replace(/\{Chapter:(\d+)\}/gi, (_, padding) => {
+    const chapterNum = parseInt(sampleData.Chapter, 10);
+    return chapterNum.toString().padStart(padding.length, '0');
+  });
 
-  if (chapterPadding === "auto") {
-    paddedChapter = chapterNum.toString().padStart(4, '0'); // Assume max chapter for preview
-  } else if (chapterPadding === "00") {
-    paddedChapter = chapterNum.toString().padStart(2, '0');
-  } else if (chapterPadding === "000") {
-    paddedChapter = chapterNum.toString().padStart(3, '0');
-  } else if (chapterPadding === "0000") {
-    paddedChapter = chapterNum.toString().padStart(4, '0');
-  }
-
-  // Replace {Chapter:000} style patterns
-  result = result.replace(/\{Chapter:\d+\}/gi, paddedChapter);
-
-  // Handle Volume padding
-  const volumeNum = parseInt(sampleData.Volume, 10);
-  let paddedVolume = sampleData.Volume;
-
-  if (volumePadding === "00") {
-    paddedVolume = volumeNum.toString().padStart(2, '0');
-  } else if (volumePadding === "000") {
-    paddedVolume = volumeNum.toString().padStart(3, '0');
-  }
-
-  // Apply volume padding to already replaced Volume values
-  result = result.replace(new RegExp(sampleData.Volume, 'g'), paddedVolume);
+  // Handle {Volume:XX} padding patterns
+  result = result.replace(/\{Volume:(\d+)\}/gi, (_, padding) => {
+    const volumeNum = parseInt(sampleData.Volume, 10);
+    return volumeNum.toString().padStart(padding.length, '0');
+  });
 
   // Handle title inclusion
   if (!includeChapterTitle) {
@@ -259,11 +239,12 @@ export function NamingFormatSection({
   localSettings,
   setLocalSettings
 }: NamingFormatSectionProps) {
+  const { toast } = useToast();
+  const [isRenaming, setIsRenaming] = useState(false);
+
   // Derive default values if not set
   const fileNameTemplate = localSettings.fileNameTemplate ?? "[{Provider}][{Language}] {Series} {Chapter}";
   const folderTemplate = localSettings.folderTemplate ?? "{Type}/{Series}";
-  const chapterPadding = localSettings.chapterPadding ?? "auto";
-  const volumePadding = localSettings.volumePadding ?? "0";
   const outputFormat = localSettings.outputFormat ?? 0;
   const includeChapterTitle = localSettings.includeChapterTitle ?? false;
 
@@ -272,27 +253,53 @@ export function NamingFormatSection({
     generatePreview(
       fileNameTemplate,
       SAMPLE_DATA,
-      chapterPadding,
-      volumePadding,
       outputFormat,
       includeChapterTitle,
       false
     ),
-    [fileNameTemplate, chapterPadding, volumePadding, outputFormat, includeChapterTitle]
+    [fileNameTemplate, outputFormat, includeChapterTitle]
   );
 
   const folderPreview = useMemo(() =>
     generatePreview(
       folderTemplate,
       SAMPLE_DATA,
-      chapterPadding,
-      volumePadding,
       outputFormat,
       includeChapterTitle,
       true
     ),
-    [folderTemplate, chapterPadding, volumePadding, outputFormat, includeChapterTitle]
+    [folderTemplate, outputFormat, includeChapterTitle]
   );
+
+  const handleRenameFiles = async () => {
+    setIsRenaming(true);
+    try {
+      const response = await fetch('/api/settings/rename-files', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to rename files');
+      }
+
+      const result = await response.json();
+      toast({
+        title: "Rename Started",
+        description: `Renaming ${result.totalFiles ?? 'all'} files to match current naming scheme. This may take a while.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to start file renaming. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRenaming(false);
+    }
+  };
 
   return (
     <CardContent className="space-y-6">
@@ -300,7 +307,7 @@ export function NamingFormatSection({
       <TemplateInput
         id="file-name-template"
         label="File Name Template"
-        description="Define how downloaded chapter files are named"
+        description="Define how downloaded chapter files are named. Use padding like {Chapter:000} for zero-padded numbers."
         value={fileNameTemplate}
         onChange={(value) => setLocalSettings(prev => ({
           ...prev,
@@ -324,85 +331,30 @@ export function NamingFormatSection({
         preview={folderPreview}
       />
 
-      {/* Output Format and Padding Options */}
-      <div className="grid gap-4 md:grid-cols-3">
-        {/* Output Format */}
-        <div className="space-y-2">
-          <Label htmlFor="output-format">Output Format</Label>
-          <Select
-            value={outputFormat.toString()}
-            onValueChange={(value) => setLocalSettings(prev => ({
-              ...prev,
-              outputFormat: parseInt(value, 10)
-            }))}
-          >
-            <SelectTrigger id="output-format">
-              <SelectValue placeholder="Select format" />
-            </SelectTrigger>
-            <SelectContent>
-              {OUTPUT_FORMATS.map((format) => (
-                <SelectItem key={format.value} value={format.value}>
-                  {format.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-sm text-muted-foreground">
-            File format for downloaded chapters
-          </p>
-        </div>
-
-        {/* Chapter Padding */}
-        <div className="space-y-2">
-          <Label htmlFor="chapter-padding">Chapter Padding</Label>
-          <Select
-            value={chapterPadding}
-            onValueChange={(value) => setLocalSettings(prev => ({
-              ...prev,
-              chapterPadding: value
-            }))}
-          >
-            <SelectTrigger id="chapter-padding">
-              <SelectValue placeholder="Select padding" />
-            </SelectTrigger>
-            <SelectContent>
-              {CHAPTER_PADDING_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-sm text-muted-foreground">
-            Zero-padding for chapter numbers
-          </p>
-        </div>
-
-        {/* Volume Padding */}
-        <div className="space-y-2">
-          <Label htmlFor="volume-padding">Volume Padding</Label>
-          <Select
-            value={volumePadding}
-            onValueChange={(value) => setLocalSettings(prev => ({
-              ...prev,
-              volumePadding: value
-            }))}
-          >
-            <SelectTrigger id="volume-padding">
-              <SelectValue placeholder="Select padding" />
-            </SelectTrigger>
-            <SelectContent>
-              {VOLUME_PADDING_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-sm text-muted-foreground">
-            Zero-padding for volume numbers
-          </p>
-        </div>
+      {/* Output Format */}
+      <div className="space-y-2">
+        <Label htmlFor="output-format">Output Format</Label>
+        <Select
+          value={outputFormat.toString()}
+          onValueChange={(value) => setLocalSettings(prev => ({
+            ...prev,
+            outputFormat: parseInt(value, 10)
+          }))}
+        >
+          <SelectTrigger id="output-format" className="w-full md:w-64">
+            <SelectValue placeholder="Select format" />
+          </SelectTrigger>
+          <SelectContent>
+            {OUTPUT_FORMATS.map((format) => (
+              <SelectItem key={format.value} value={format.value}>
+                {format.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-sm text-muted-foreground">
+          File format for downloaded chapters
+        </p>
       </div>
 
       {/* Include Chapter Title Toggle */}
@@ -423,6 +375,50 @@ export function NamingFormatSection({
             includeChapterTitle: checked
           }))}
         />
+      </div>
+
+      {/* Rename Existing Files */}
+      <div className="flex items-center justify-between rounded-lg border p-4 border-dashed">
+        <div className="space-y-0.5">
+          <Label className="text-base">
+            Rename Existing Files
+          </Label>
+          <p className="text-sm text-muted-foreground">
+            Rename all existing downloaded files to match the current naming scheme. Save settings first.
+          </p>
+        </div>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" disabled={isRenaming}>
+              {isRenaming ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Renaming...
+                </>
+              ) : (
+                <>
+                  <FolderSync className="mr-2 h-4 w-4" />
+                  Rename Files
+                </>
+              )}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Rename All Files?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will rename all existing downloaded files to match your current naming scheme.
+                Make sure you have saved your settings first. This operation cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleRenameFiles}>
+                Rename All Files
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </CardContent>
   );

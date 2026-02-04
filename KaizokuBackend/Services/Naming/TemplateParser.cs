@@ -173,19 +173,12 @@ public class TemplateParser : ITemplateParser
         if (!chapter.HasValue)
             return "";
 
-        // Determine padding length from format, settings, or max chapter
+        // Determine padding length from format string (e.g., "000" = 3 digits)
+        // If no format specified, no padding is applied
         int paddingLength = 0;
         if (!string.IsNullOrEmpty(format) && format.All(c => c == '0'))
         {
             paddingLength = format.Length;
-        }
-        else if (!string.IsNullOrEmpty(settings.ChapterPadding) && settings.ChapterPadding != "auto" && settings.ChapterPadding != "0")
-        {
-            paddingLength = settings.ChapterPadding.Length;
-        }
-        else if (settings.ChapterPadding == "auto" && maxChapter.HasValue)
-        {
-            paddingLength = ((int)maxChapter.Value).ToString().Length;
         }
 
         // Format chapter with proper decimal handling
@@ -212,15 +205,12 @@ public class TemplateParser : ITemplateParser
 
         string volumeStr = volume.Value.ToString();
 
-        // Determine padding from format or settings
-        int paddingLength = 2; // Default
+        // Determine padding from format string (e.g., "00" = 2 digits)
+        // If no format specified, no padding is applied
+        int paddingLength = 0;
         if (!string.IsNullOrEmpty(format) && format.All(c => c == '0'))
         {
             paddingLength = format.Length;
-        }
-        else if (!string.IsNullOrEmpty(settings.VolumePadding) && settings.VolumePadding != "0")
-        {
-            paddingLength = settings.VolumePadding.Length;
         }
 
         return paddingLength > 0 ? volumeStr.PadLeft(paddingLength, '0') : volumeStr;
