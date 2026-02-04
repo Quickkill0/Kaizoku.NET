@@ -28,7 +28,7 @@ Ports:&#xD;
   <WebUI>http://[IP]:[PORT:9833]</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/Quickkill0/Kaizoku.NET/main/unraid/kaizoku.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/Quickkill0/Kaizoku.NET/main/KaizokuFrontend/public/kaizoku-logo.png</Icon>
-  <ExtraParams>--restart unless-stopped</ExtraParams>
+  <ExtraParams>--restart unless-stopped --gpus all</ExtraParams>
   <PostArgs/>
   <CPUset/>
   <DateInstalled></DateInstalled>
@@ -42,4 +42,6 @@ Ports:&#xD;
   <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="User ID for file permissions (default: nobody)" Type="Variable" Display="advanced" Required="false" Mask="false">99</Config>
   <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="Group ID for file permissions (default: users)" Type="Variable" Display="advanced" Required="false" Mask="false">100</Config>
   <Config Name="TZ" Target="TZ" Default="America/New_York" Mode="" Description="Timezone (e.g., America/New_York, Europe/London)" Type="Variable" Display="advanced" Required="false" Mask="false">America/New_York</Config>
+  <Config Name="NVIDIA_VISIBLE_DEVICES" Target="NVIDIA_VISIBLE_DEVICES" Default="all" Mode="" Description="GPU devices to expose (all, none, or GPU UUID)" Type="Variable" Display="advanced" Required="false" Mask="false">all</Config>
+  <Config Name="NVIDIA_DRIVER_CAPABILITIES" Target="NVIDIA_DRIVER_CAPABILITIES" Default="all" Mode="" Description="Driver capabilities (all, compute, graphics, utility, video)" Type="Variable" Display="advanced" Required="false" Mask="false">all</Config>
 </Container>
