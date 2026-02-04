@@ -57,16 +57,21 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Setup Node.js
+      - name: Setup Node.js and pnpm
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Build Frontend
         working-directory: KaizokuFrontend
         run: |
-          npm install --legacy-peer-deps
-          npm run build
+          pnpm install --frozen-lockfile
+          pnpm run build
 
       - name: Package Frontend for Backend
         run: |
