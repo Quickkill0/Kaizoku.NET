@@ -26,6 +26,7 @@ public class CbzArchiveWriter : IArchiveWriter
     /// <inheritdoc/>
     public Task WriteEntryAsync(string entryName, Stream content, CancellationToken token = default)
     {
+        token.ThrowIfCancellationRequested();
         if (_disposed) throw new ObjectDisposedException(nameof(CbzArchiveWriter));
         if (_finalized) throw new InvalidOperationException("Archive has been finalized");
         if (content == null) throw new ArgumentNullException(nameof(content));
