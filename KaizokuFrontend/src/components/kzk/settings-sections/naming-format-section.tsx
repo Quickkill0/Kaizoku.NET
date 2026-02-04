@@ -16,16 +16,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { type Settings } from "@/lib/api/types";
 import { useToast } from "@/hooks/use-toast";
 
@@ -241,6 +239,7 @@ export function NamingFormatSection({
 }: NamingFormatSectionProps) {
   const { toast } = useToast();
   const [isRenaming, setIsRenaming] = useState(false);
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
 
   // Derive default values if not set
   const fileNameTemplate = localSettings.fileNameTemplate ?? "[{Provider}][{Language}] {Series} {Chapter}";
@@ -387,8 +386,8 @@ export function NamingFormatSection({
             Rename all existing downloaded files to match the current naming scheme. Save settings first.
           </p>
         </div>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
+        <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+          <DialogTrigger asChild>
             <Button variant="outline" disabled={isRenaming}>
               {isRenaming ? (
                 <>
@@ -402,23 +401,25 @@ export function NamingFormatSection({
                 </>
               )}
             </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Rename All Files?</AlertDialogTitle>
-              <AlertDialogDescription>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Rename All Files?</DialogTitle>
+              <DialogDescription>
                 This will rename all existing downloaded files to match your current naming scheme.
                 Make sure you have saved your settings first. This operation cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleRenameFiles}>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowRenameDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => { handleRenameFiles(); setShowRenameDialog(false); }}>
                 Rename All Files
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </CardContent>
   );
