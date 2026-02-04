@@ -67,8 +67,6 @@ export interface Settings {
   // Naming & Format properties
   fileNameTemplate: string;
   folderTemplate: string;
-  chapterPadding: string;  // "auto", "0", "00", "000", "0000"
-  volumePadding: string;   // "0", "00", "000"
   outputFormat: number;    // 0=CBZ, 1=PDF
   includeChapterTitle: boolean;
 }
