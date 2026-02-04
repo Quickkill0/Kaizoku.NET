@@ -13,6 +13,9 @@ namespace KaizokuBackend.Utils
         {
             while (true)
             {
+                // Check cancellation at start of each iteration
+                token.ThrowIfCancellationRequested();
+
                 var semaphore = _locks.GetOrAdd(key, _ => new RefCountedSemaphore());
 
                 // Increment ref count before waiting - if it was 0, the semaphore is being disposed
@@ -31,7 +34,8 @@ namespace KaizokuBackend.Utils
                     }
                 }
 
-                // Semaphore is being disposed, retry to get a new one
+                // Semaphore is being disposed, yield to allow disposal to complete before retry
+                await Task.Yield();
             }
         }
 

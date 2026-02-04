@@ -29,7 +29,7 @@ namespace KaizokuBackend.Services.Downloads
         private readonly JobHubReportService _reportingService;
         private readonly string _tempFolder;
         private readonly ILogger<DownloadCommandService> _logger;
-        private static readonly KeyedAsyncLock _lock = new KeyedAsyncLock();
+        private static readonly KeyedAsyncLock _seriesLock = new KeyedAsyncLock();
         private static readonly SemaphoreSlim _directoryLock = new SemaphoreSlim(1, 1);
 
         public DownloadCommandService(
@@ -240,7 +240,7 @@ namespace KaizokuBackend.Services.Downloads
                     return await RescheduleDownloadAsync(ch, token).ConfigureAwait(false);
                 }
 
-                using (var n = await _lock.LockAsync(ch.SeriesId.ToString(), token).ConfigureAwait(false))
+                using (var n = await _seriesLock.LockAsync(ch.SeriesId.ToString(), token).ConfigureAwait(false))
                 {
                     SeriesProvider? provider = await _db.SeriesProviders.FirstOrDefaultAsync(a => a.Id == ch.SeriesProviderId, token).ConfigureAwait(false);
                     if (provider == null)
