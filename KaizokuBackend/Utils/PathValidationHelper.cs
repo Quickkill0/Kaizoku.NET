@@ -8,7 +8,7 @@ namespace KaizokuBackend.Utils
                 return false;
 
             // Check for path traversal patterns
-            if (path.Contains("..") || path.Contains("~"))
+            if (path.Contains(".."))
                 return false;
 
             // Check for invalid characters
