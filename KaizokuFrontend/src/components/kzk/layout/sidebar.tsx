@@ -124,8 +124,8 @@ function AppIcon() {
       className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 text-lg font-semibold text-primary-foreground"
     >
       <Image
-        src="/kaizoku.net.png"
-        alt="Kaizoku Net"
+        src="/kaizoku-logo.png"
+        alt="Kaizoku"
         priority
         width={200}
         className="h-9 w-9 transition-all group-hover:scale-110"

@@ -229,7 +229,7 @@ const ProviderCard = ({ provider,
             {/* Provider Thumbnail */}
             <div className="flex-shrink-0">
               <img
-                src={provider.thumbnailUrl || "/kaizoku.net.png"}
+                src={provider.thumbnailUrl || "/kaizoku-logo.png"}
                 alt={provider.title} style={{ aspectRatio: '4/6' }}
 
                 className="h-68 object-cover rounded border"
@@ -422,7 +422,7 @@ const ProviderCard = ({ provider,
 // Helper function to format thumbnail URL
 const formatThumbnailUrl = (thumbnailUrl?: string): string => {
   if (!thumbnailUrl) {
-    return '/kaizoku.net.png';
+    return '/kaizoku-logo.png';
   }
   
   // If it already starts with http, return as is
@@ -523,14 +523,14 @@ const DownloadItem = ({ download }: { download: DownloadInfo }) => {
       <CardHeader className="pb-2 p-2">
         <div className="flex items-start gap-3">
           <Image
-            src={download.thumbnailUrl ? formatThumbnailUrl(download.thumbnailUrl) : '/kaizoku.net.png'}
+            src={download.thumbnailUrl ? formatThumbnailUrl(download.thumbnailUrl) : '/kaizoku-logo.png'}
             alt={download.title || 'Download'}
             width={60}
             height={80}
             className="rounded-md object-cover flex-shrink-0"
             onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
               const target = e.target as HTMLImageElement;
-              target.src = '/kaizoku.net.png';
+              target.src = '/kaizoku-logo.png';
             }}
           />
           <div className="flex-1 min-w-0">
@@ -1799,7 +1799,7 @@ function SeriesPageContent() {
             <div className="flex gap-4">
               {/* Poster */}
               <div className="flex-shrink-0">
-                <img src={displayThumbnail || "/kaizoku.net.png"}
+                <img src={displayThumbnail || "/kaizoku-logo.png"}
                   alt={displayTitle}
                   style={{ aspectRatio: '4/6' }}
                   className="h-96 object-cover rounded-lg border"

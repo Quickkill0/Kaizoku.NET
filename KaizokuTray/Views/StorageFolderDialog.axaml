@@ -12,7 +12,7 @@
         MinWidth="500" MinHeight="250"
         WindowStartupLocation="CenterScreen"
         CanResize="true"
-        Icon="/Assets/kaizoku.net.ico">
+        Icon="/Assets/kaizoku-logo.ico">
     <Window.Styles>
         <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
             <Setter Property="BorderBrush" Value="#C90C32"/>

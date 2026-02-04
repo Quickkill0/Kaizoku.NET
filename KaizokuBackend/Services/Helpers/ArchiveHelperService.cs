@@ -415,7 +415,7 @@ namespace KaizokuBackend.Services.Helpers
             {
                 info.Manga = "YesAndRightToLeft";
             }
-            info.Notes = "Created by Kaizoku.NET";
+            info.Notes = "Created by Kaizoku";
             return info;
         }
 
@@ -461,7 +461,7 @@ namespace KaizokuBackend.Services.Helpers
             {
                 info.Manga = "YesAndRightToLeft";
             }
-            info.Notes = "Created by Kaizoku.NET";
+            info.Notes = "Created by Kaizoku";
             return info;
         }
 
