@@ -797,7 +797,7 @@ export function SettingsManager({
   showSaveButton = true,
   showHeader = true,
   title = "Settings",
-  description = "Configure your Kaizoku.NET application settings",
+  description = "Configure your Kaizoku application settings",
   onSave,
   onSettingsChange,
   useLocalState = false,

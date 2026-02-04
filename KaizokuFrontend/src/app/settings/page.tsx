@@ -9,7 +9,7 @@ export default function SettingsPage() {
       showHeader={true}
       showSaveButton={true}
       title="Settings"
-      description="Configure your Kaizoku.NET application settings"
+      description="Configure your Kaizoku application settings"
     />
   );
 }

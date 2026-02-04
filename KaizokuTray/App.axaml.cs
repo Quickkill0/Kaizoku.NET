@@ -192,7 +192,7 @@ public partial class App : Application
 
             try
             {
-                var uri = new Uri("avares://KaizokuTray/Assets/kaizoku.net.ico");
+                var uri = new Uri("avares://KaizokuTray/Assets/kaizoku-logo.ico");
                 using var stream = AssetLoader.Open(uri);
                 Bitmap bitmap = new Bitmap(stream);
                 var icon = new WindowIcon(bitmap);
@@ -203,7 +203,7 @@ public partial class App : Application
                 Console.WriteLine("Could not load tray icon from resources, using default icon");
             }
 
-            trayIcon.ToolTipText = "Kaizoku.NET";
+            trayIcon.ToolTipText = "Kaizoku";
 
             var menu = new NativeMenu();
 

@@ -39,7 +39,7 @@ foreach ($rid in $runtimeIds) {
 
 
 $trayBaseName = "KaizokuTray"
-$finalName = "Kaizoku.NET"
+$finalName = "Kaizoku"
 
 $version = $null
 
@@ -70,7 +70,7 @@ foreach ($rid in $runtimeIds) {
 # Create ZIPs using the retrieved version
 foreach ($rid in $runtimeIds) {
     $outputPath = "$trayOutputBase/$rid"
-    $zipName = "bin/Kaizoku.NET-$rid-v$version.zip"
+    $zipName = "bin/Kaizoku-$rid-v$version.zip"
 
     if (Test-Path $zipName) {
         Remove-Item $zipName -Force

@@ -72,7 +72,7 @@ const DownloadCard = memo(({ item }: { item: ExtendedQueueItem | DownloadInfo })
   // Helper function to format thumbnail URL
   const formatThumbnailUrl = (thumbnailUrl?: string): string => {
     if (!thumbnailUrl) {
-      return '/kaizoku.net.png';
+      return '/kaizoku-logo.png';
     }
     
     // If it already starts with http, return as is
@@ -147,7 +147,7 @@ const DownloadCard = memo(({ item }: { item: ExtendedQueueItem | DownloadInfo })
             className="rounded-md object-cover flex-shrink-0"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = '/kaizoku.net.png';
+              target.src = '/kaizoku-logo.png';
             }}
           />
           <div className="flex-1 min-w-0">
@@ -234,7 +234,7 @@ const ErrorDownloadCard = memo(({ item }: { item: DownloadInfo }) => {
   // Helper function to format thumbnail URL
   const formatThumbnailUrl = (thumbnailUrl?: string): string => {
     if (!thumbnailUrl) {
-      return '/kaizoku.net.png';
+      return '/kaizoku-logo.png';
     }
     
     if (thumbnailUrl.startsWith('http')) {
@@ -295,7 +295,7 @@ const ErrorDownloadCard = memo(({ item }: { item: DownloadInfo }) => {
             className="rounded-md object-cover flex-shrink-0"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = '/kaizoku.net.png';
+              target.src = '/kaizoku-logo.png';
             }}
           />
           <div className="flex-1 min-w-0">

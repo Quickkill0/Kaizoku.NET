@@ -51,7 +51,7 @@ function ProviderCard({
                 src={extension.iconUrl}
                 alt={`${extension.name} icon`}
                 className={`${isCompact ? 'h-12 w-12' : 'h-20 w-20'} rounded-lg object-cover`}
-                fallbackSrc="/kaizoku.net.png"
+                fallbackSrc="/kaizoku-logo.png"
                 loading="lazy"
               />
               {showNsfwIndicator && extension.isNsfw && (

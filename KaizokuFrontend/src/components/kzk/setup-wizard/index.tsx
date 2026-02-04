@@ -67,7 +67,7 @@ export function SetupWizard() {
     >        <DialogHeader>
         <DialogTitle>Import Wizard</DialogTitle>
         <DialogDescription>
-          Configure your Kaizoku.NET installation by following these steps to set up preferences, add sources, and import existing series.
+          Configure your Kaizoku installation by following these steps to set up preferences, add sources, and import existing series.
         </DialogDescription>
       </DialogHeader><div className="flex w-full flex-col gap-4 min-w-0 overflow-hidden">          <Stepper
         initialStep={0}
