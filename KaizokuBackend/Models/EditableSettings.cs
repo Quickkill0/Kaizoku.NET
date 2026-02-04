@@ -49,16 +49,22 @@ public class EditableSettings
     [JsonPropertyName("numberOfSimultaneousDownloadsPerProvider")]
     public int NumberOfSimultaneousDownloadsPerProvider { get; set; } = 3;
 
-    [JsonPropertyName("nsfwVisibility")]
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public NsfwVisibility NsfwVisibility { get; set; } = NsfwVisibility.HideByDefault;
+    [JsonPropertyName("fileNameTemplate")]
+    public string FileNameTemplate { get; set; } = "[{Provider}][{Language}] {Series} {Chapter}";
 
-}
+    [JsonPropertyName("folderTemplate")]
+    public string FolderTemplate { get; set; } = "{Type}/{Series}";
 
-[JsonConverter(typeof(JsonStringEnumConverter))]
-public enum NsfwVisibility
-{
-    AlwaysHide = 0,
-    HideByDefault = 1,
-    Show = 2,
+    [JsonPropertyName("chapterPadding")]
+    public string ChapterPadding { get; set; } = "auto";
+
+    [JsonPropertyName("volumePadding")]
+    public string VolumePadding { get; set; } = "00";
+
+    [JsonPropertyName("outputFormat")]
+    public int OutputFormat { get; set; } = 0;
+
+    [JsonPropertyName("includeChapterTitle")]
+    public bool IncludeChapterTitle { get; set; } = true;
+
 }
