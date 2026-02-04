@@ -112,7 +112,7 @@ public class TemplateParser : ITemplateParser
     /// <inheritdoc/>
     public string GetPreview(string template, TemplateType type)
     {
-        var sampleSettings = new Settings
+        var sampleSettings = new SettingsModel
         {
             CategorizedFolders = true
         };
