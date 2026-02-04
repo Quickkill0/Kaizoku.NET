@@ -75,9 +75,9 @@ jobs:
 
       - name: Package Frontend for Backend
         run: |
-          cd KaizokuFrontend
-          zip -r ../KaizokuBackend/wwwroot.zip out/
-          sha256sum ../KaizokuBackend/wwwroot.zip | awk '{print $1}' > ../KaizokuBackend/wwwroot.sha256
+          cd KaizokuFrontend/out
+          zip -r ../../KaizokuBackend/wwwroot.zip .
+          sha256sum ../../KaizokuBackend/wwwroot.zip | awk '{print $1}' > ../../KaizokuBackend/wwwroot.sha256
 
       - name: Build Backend (linux-x64)
         if: contains(inputs.platforms, 'linux/amd64')
