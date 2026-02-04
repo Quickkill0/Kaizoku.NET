@@ -6,6 +6,7 @@ using KaizokuBackend.Services.Helpers;
 using KaizokuBackend.Services.Import;
 using KaizokuBackend.Services.Jobs;
 using KaizokuBackend.Services.Settings;
+using KaizokuBackend.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.IO;
@@ -111,6 +112,10 @@ namespace KaizokuBackend.Controllers
         {
             try
             {
+                if (!PathValidationHelper.IsValidPath(path))
+                {
+                    return BadRequest(new { error = "Invalid path" });
+                }
                 if (linkedSeries == null || linkedSeries.Count == 0)
                 {
                     return BadRequest(new { error = "No series provided to augment" });

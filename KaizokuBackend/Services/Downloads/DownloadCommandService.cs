@@ -30,6 +30,7 @@ namespace KaizokuBackend.Services.Downloads
         private readonly string _tempFolder;
         private readonly ILogger<DownloadCommandService> _logger;
         private static readonly KeyedAsyncLock _lock = new KeyedAsyncLock();
+        private static readonly SemaphoreSlim _directoryLock = new SemaphoreSlim(1, 1);
 
         public DownloadCommandService(
             SuwayomiClient suwayomi,
@@ -125,10 +126,15 @@ namespace KaizokuBackend.Services.Downloads
 
             try
             {
-                lock (_lock)
+                await _directoryLock.WaitAsync(token).ConfigureAwait(false);
+                try
                 {
                     if (!Directory.Exists(_tempFolder))
                         Directory.CreateDirectory(_tempFolder);
+                }
+                finally
+                {
+                    _directoryLock.Release();
                 }
 
                 if (File.Exists(tempZipPath))
