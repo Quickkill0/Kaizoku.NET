@@ -188,7 +188,7 @@ Replace /path/to/your/config and /path/to/your/series with real paths on your ho
   <WebUI>http://[IP]:9833</WebUI>
 
   <TemplateURL>https://raw.githubusercontent.com/maxpiva/kaizoku-net/main/unraid/kaizoku-net.xml</TemplateURL>
-  <Icon>https://raw.githubusercontent.com/maxpiva/Kaizoku.NET/refs/heads/main/KaizokuFrontend/public/kaizoku-logo.png</Icon>
+  <Icon>https://raw.githubusercontent.com/Quickkill0/Kaizoku/main/KaizokuFrontend/public/kaizoku-logo.png</Icon>
 </Container>
 ```
 
@@ -197,7 +197,7 @@ Replace /path/to/your/config and /path/to/your/series with real paths on your ho
 
 ## 🖥️ Desktop App
 
-- A **tray application** based on Avalonia is available in the [Releases](https://github.com/maxpiva/Kaizoku.NET/releases).
+- A **tray application** based on Avalonia is available in the [Releases](https://github.com/Quickkill0/Kaizoku/releases).
 - Currently tested only on **Windows**. Testers for Linux and macOS are welcome, as I’m unable to verify it myself.
 
 ---
