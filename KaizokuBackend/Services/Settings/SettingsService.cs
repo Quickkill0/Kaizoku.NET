@@ -5,9 +5,9 @@ using KaizokuBackend.Services.Background;
 using KaizokuBackend.Services.Jobs;
 using KaizokuBackend.Services.Jobs.Models;
 using KaizokuBackend.Services.Jobs.Settings;
+using KaizokuBackend.Services.Naming;
 using KaizokuBackend.Services.Providers;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel;
 using System.Reflection;
 
 namespace KaizokuBackend.Services.Settings
@@ -18,16 +18,19 @@ namespace KaizokuBackend.Services.Settings
         private readonly AppDbContext _db;
         private readonly SuwayomiClient _client;
         private readonly IServiceScopeFactory _prov;
+        private readonly ITemplateParser _templateParser;
+        private readonly ILogger<SettingsService> _logger;
 
         private static Models.Settings? _settings;
 
-        public SettingsService(IConfiguration config, IServiceScopeFactory prov, SuwayomiClient client, AppDbContext db)
+        public SettingsService(IConfiguration config, IServiceScopeFactory prov, SuwayomiClient client, AppDbContext db, ITemplateParser templateParser, ILogger<SettingsService> logger)
         {
             _config = config;
             _client = client;
             _db = db;
             _prov = prov;
-
+            _templateParser = templateParser;
+            _logger = logger;
         }
 
 
@@ -313,47 +316,127 @@ namespace KaizokuBackend.Services.Settings
         /// </summary>
         public async Task<int> RenameFilesToCurrentSchemeAsync(CancellationToken token = default)
         {
-            // Get current settings
             var settings = await GetSettingsAsync(token).ConfigureAwait(false);
             var storageFolder = settings.StorageFolder;
 
             if (string.IsNullOrEmpty(storageFolder) || !Directory.Exists(storageFolder))
             {
+                _logger.LogWarning("Storage folder not found or not configured: {StorageFolder}", storageFolder);
                 return 0;
             }
 
-            // Get all series from database to map files to their metadata
-            var series = await _db.Series
-                .Include(s => s.Chapters)
-                .Include(s => s.LinkedSeries)
-                .AsNoTracking()
+            // Get all series with their providers and chapters (need tracking to update filenames)
+            var allSeries = await _db.Series
+                .Include(s => s.Sources)
+                    .ThenInclude(sp => sp.Chapters)
                 .ToListAsync(token).ConfigureAwait(false);
 
             int renamedCount = 0;
+            int errorCount = 0;
 
-            // For now, return the count of files that would be renamed
-            // The actual renaming logic would need to:
-            // 1. Parse existing filenames to extract chapter info
-            // 2. Match with database records
-            // 3. Generate new filename using current template
-            // 4. Rename the file
-
-            foreach (var s in series)
+            foreach (var series in allSeries)
             {
-                if (s.Chapters == null) continue;
+                if (series.Sources == null) continue;
 
-                foreach (var chapter in s.Chapters)
+                // Get max chapter for this series (for potential auto-padding)
+                decimal? maxChapter = series.Sources
+                    .SelectMany(sp => sp.Chapters)
+                    .Where(c => c.Number.HasValue)
+                    .Max(c => c.Number);
+
+                foreach (var source in series.Sources)
                 {
-                    if (!string.IsNullOrEmpty(chapter.FilePath) && File.Exists(chapter.FilePath))
+                    if (source.Chapters == null) continue;
+
+                    foreach (var chapter in source.Chapters)
                     {
-                        renamedCount++;
+                        if (string.IsNullOrEmpty(chapter.Filename)) continue;
+
+                        // Build current file path
+                        var currentPath = Path.Combine(storageFolder, series.StoragePath ?? "", chapter.Filename);
+
+                        if (!File.Exists(currentPath))
+                        {
+                            continue;
+                        }
+
+                        try
+                        {
+                            // Create template variables from chapter data
+                            var vars = new TemplateVariables(
+                                Series: series.Title,
+                                Chapter: chapter.Number,
+                                Volume: null, // Volume info not stored in chapter
+                                Provider: source.Provider,
+                                Scanlator: source.Scanlator,
+                                Language: source.Language,
+                                Title: settings.IncludeChapterTitle ? chapter.Name : null,
+                                UploadDate: chapter.ProviderUploadDate,
+                                Type: series.Type,
+                                MaxChapter: maxChapter
+                            );
+
+                            // Generate new filename using template
+                            var newFileName = _templateParser.ParseFileName(settings.FileNameTemplate, vars, settings);
+
+                            // Ensure correct extension based on output format
+                            var currentExt = Path.GetExtension(currentPath);
+                            var expectedExt = settings.OutputFormat == 1 ? ".pdf" : ".cbz";
+
+                            // Keep original extension if it's a valid archive format
+                            if (currentExt.Equals(".cbz", StringComparison.OrdinalIgnoreCase) ||
+                                currentExt.Equals(".pdf", StringComparison.OrdinalIgnoreCase) ||
+                                currentExt.Equals(".zip", StringComparison.OrdinalIgnoreCase))
+                            {
+                                // Remove any extension the template might have added and use original
+                                if (newFileName.EndsWith(".cbz", StringComparison.OrdinalIgnoreCase) ||
+                                    newFileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    newFileName = newFileName[..^4];
+                                }
+                                newFileName += currentExt;
+                            }
+
+                            // Skip if filename is the same
+                            if (chapter.Filename.Equals(newFileName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
+
+                            var newPath = Path.Combine(storageFolder, series.StoragePath ?? "", newFileName);
+
+                            // Skip if target already exists (avoid overwriting)
+                            if (File.Exists(newPath))
+                            {
+                                _logger.LogWarning("Target file already exists, skipping: {NewPath}", newPath);
+                                continue;
+                            }
+
+                            // Rename the file
+                            File.Move(currentPath, newPath);
+
+                            // Update database
+                            chapter.Filename = newFileName;
+                            renamedCount++;
+
+                            _logger.LogInformation("Renamed: {OldName} -> {NewName}", chapter.Filename, newFileName);
+                        }
+                        catch (Exception ex)
+                        {
+                            errorCount++;
+                            _logger.LogError(ex, "Error renaming file {FilePath}", currentPath);
+                        }
                     }
                 }
             }
 
-            // TODO: Implement actual file renaming using ITemplateParser
-            // This would be a background job to avoid blocking the API
+            // Save all database changes
+            if (renamedCount > 0)
+            {
+                await _db.SaveChangesAsync(token).ConfigureAwait(false);
+            }
 
+            _logger.LogInformation("Rename operation complete: {RenamedCount} files renamed, {ErrorCount} errors", renamedCount, errorCount);
             return renamedCount;
         }
         public async ValueTask<Models.Settings> GetSettingsAsync(CancellationToken token = default)
