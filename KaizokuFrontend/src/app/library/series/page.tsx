@@ -1784,25 +1784,25 @@ function SeriesPageContent() {
       <div className="lg:col-span-4 space-y-3 min-w-0 overflow-hidden">
         {/* Top Left: Series Details */}          <Card className="bg-secondary overflow-hidden">
           <CardHeader className="p-4">
-            <div className="flex flex-col sm:flex-row gap-4 min-w-0 overflow-hidden">
+            <div className="flex flex-col md:flex-row gap-4 min-w-0 overflow-hidden">
               {/* Poster */}
-              <div className="flex-shrink-0 mx-auto sm:mx-0">
+              <div className="flex-shrink-0 mx-auto md:mx-0">
                 <img src={displayThumbnail || "/kaizoku-logo.png"}
                   alt={displayTitle}
                   style={{ aspectRatio: '4/6' }}
-                  className="h-64 sm:h-96 object-cover rounded-lg border"
+                  className="h-64 md:h-96 object-cover rounded-lg border"
                 />
               </div>
               {/* Series Info */}
               <div className="flex-1 gap-2 relative flex flex-col min-w-0 overflow-hidden">
                 {/* Status Badge - Top Right of Info Pane */}
-                <div className="sm:absolute sm:top-0 sm:right-0 mb-2 sm:mb-0">
+                <div className="lg:absolute lg:top-0 lg:right-0 mb-2 lg:mb-0">
                   <Badge className={'text-base ' + statusDisplay.color}>
                     {statusDisplay.text}
                   </Badge>
                 </div>
                 <div className="min-w-0 overflow-hidden">
-                  <CardTitle className="text-xl sm:text-2xl sm:pr-20 truncate">{displayTitle}</CardTitle>
+                  <CardTitle className="text-xl lg:text-2xl lg:pr-20 truncate">{displayTitle}</CardTitle>
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 text-sm min-w-0">
                     <Badge variant="primary">
                       {series.chapterList}
@@ -1865,7 +1865,7 @@ function SeriesPageContent() {
                   )}
                 
                 {/* Action Buttons - Delete, Verify, and Pause/Resume Downloads */}
-                <div className="mt-auto pt-2 sm:absolute sm:bottom-0 sm:right-0 flex flex-wrap gap-2 justify-end">
+                <div className="mt-auto pt-2 lg:absolute lg:bottom-0 lg:right-0 flex flex-wrap gap-2 justify-center md:justify-end">
                   {/* Delete Series Button */}
                   <Button
                     variant="destructive"
@@ -1873,7 +1873,8 @@ function SeriesPageContent() {
                     onClick={handleDeleteSeriesClick}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
-                    Delete Series
+                    <span className="hidden sm:inline">Delete Series</span>
+                    <span className="sm:hidden">Delete</span>
                   </Button>
 
                   {/* Verify Integrity Button */}
@@ -1884,7 +1885,7 @@ function SeriesPageContent() {
                     disabled={verifyIntegrity.isPending}
                   >
                     <ShieldCheck className="h-4 w-4 mr-1" />
-                    {verifyIntegrity.isPending ? "Verifying..." : "Verify"}
+                    {verifyIntegrity.isPending ? "..." : "Verify"}
                   </Button>
 
                   {/* Pause/Resume Downloads Button */}
@@ -1897,12 +1898,14 @@ function SeriesPageContent() {
                     {pausedDownloads ? (
                       <>
                         <Play className="h-4 w-4" />
-                        Resume Downloads
+                        <span className="hidden sm:inline">Resume Downloads</span>
+                        <span className="sm:hidden">Resume</span>
                       </>
                     ) : (
                       <>
                         <Pause className="h-4 w-4" />
-                        Pause Downloads
+                        <span className="hidden sm:inline">Pause Downloads</span>
+                        <span className="sm:hidden">Pause</span>
                       </>
                     )}
                   </Button>
