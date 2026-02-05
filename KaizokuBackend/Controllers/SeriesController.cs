@@ -194,9 +194,10 @@ namespace KaizokuBackend.Controllers
         [ProducesResponseType(500)]
         public async Task<IActionResult> GetSeriesThumbAsync([FromRoute] string id, CancellationToken token = default)
         {
-            if (!PathValidationHelper.IsValidGuid(id))
+            // Thumbnail IDs are in format "{suwayomiId}!{timestamp}" or "unknown", not GUIDs
+            if (string.IsNullOrEmpty(id))
             {
-                return BadRequest(new { error = "Invalid series id" });
+                return BadRequest(new { error = "Invalid thumbnail id" });
             }
             try
             {
