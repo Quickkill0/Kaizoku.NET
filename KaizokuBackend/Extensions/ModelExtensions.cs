@@ -44,7 +44,7 @@ namespace KaizokuBackend.Extensions
                 Provider = serie.Provider,
                 Status = serie.Status,
                 Title = serie.Title,
-                ThumbnailUrl = $"{provider.BaseUrl}{serie.ThumbnailUrl}",
+                ThumbnailUrl = provider.BaseUrl + (string.IsNullOrEmpty(serie.ThumbnailUrl) ? "serie/thumb/unknown" : serie.ThumbnailUrl),
                 Language = serie.Language,
                 ChapterCount = serie.ChapterCount,
                 FetchDate = serie.FetchDate,
