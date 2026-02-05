@@ -325,10 +325,10 @@ namespace KaizokuBackend.Services.Settings
                 return 0;
             }
 
-            // Get all series with their providers and chapters (need tracking to update filenames)
+            // Get all series with their providers (need tracking to update filenames)
+            // Note: Chapters are automatically loaded as they are stored as JSON in SeriesProvider
             var allSeries = await _db.Series
                 .Include(s => s.Sources)
-                    .ThenInclude(sp => sp.Chapters)
                 .ToListAsync(token).ConfigureAwait(false);
 
             int renamedCount = 0;

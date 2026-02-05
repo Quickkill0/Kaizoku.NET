@@ -171,7 +171,7 @@ namespace KaizokuBackend.Extensions
                 Id = s.Id,
                 Title = s.Title,
                 Description = s.Description,
-                ThumbnailUrl = cp.BaseUrl + s.ThumbnailUrl,
+                ThumbnailUrl = cp.BaseUrl + (string.IsNullOrEmpty(s.ThumbnailUrl) ? "serie/thumb/unknown" : s.ThumbnailUrl),
                 Artist = s.Artist,
                 PausedDownloads = s.PauseDownloads,
                 Author = s.Author,
