@@ -224,21 +224,20 @@ const ProviderCard = ({ provider,
 
         {/* Header section with thumbnail and info */}
         <div className="flex flex-col sm:flex-row items-start gap-3 relative min-w-0 overflow-hidden">
-          <div className="flex items-start gap-3 flex-1 min-w-0 overflow-hidden w-full">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 flex-1 min-w-0 overflow-hidden w-full">
             {/* Provider Thumbnail */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 w-full sm:w-auto flex justify-center sm:justify-start">
               <img
                 src={provider.thumbnailUrl || "/kaizoku-logo.png"}
                 alt={provider.title} style={{ aspectRatio: '4/6' }}
-
-                className="h-68 object-cover rounded border"
+                className="h-48 sm:h-68 max-w-[160px] sm:max-w-none object-cover rounded border"
               />
             </div>
 
-            <div className="flex-1 space-y-2 min-w-0 overflow-hidden">              <div className="min-w-0 overflow-hidden">
+            <div className="flex-1 space-y-2 min-w-0 overflow-hidden w-full text-center sm:text-left">              <div className="min-w-0 overflow-hidden">
               <CardTitle className="text-lg truncate">{provider.title}</CardTitle>
               { provider.url ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer hover:bg-accent/80 transition-colors min-w-0 overflow-hidden flex-wrap"
+              <div className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer hover:bg-accent/80 transition-colors min-w-0 overflow-hidden flex-wrap justify-center sm:justify-start"
                      onClick={(e) => {
                     e.stopPropagation();
                     if (provider.url) {
@@ -259,7 +258,7 @@ const ProviderCard = ({ provider,
                 </Badge>
               </div>
               ) : (
-                 <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0 overflow-hidden flex-wrap">
+                 <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0 overflow-hidden flex-wrap justify-center sm:justify-start">
                 <span className="text-lg truncate min-w-0">{provider.provider}{(provider.provider != provider.scanlator && provider.scanlator) ? ` • ${provider.scanlator}` : ''}</span>
                 <ReactCountryFlag
                   countryCode={getCountryCodeForLanguage(provider.lang)}
@@ -273,7 +272,7 @@ const ProviderCard = ({ provider,
                 </div>
               )}
             </div>{/* Stats grid */}
-              <div className="flex flex-wrap gap-2 mt-1 text-sm min-w-0 overflow-hidden">
+              <div className="flex flex-wrap gap-2 mt-1 text-sm min-w-0 overflow-hidden justify-center sm:justify-start">
                 <div className="min-w-0 overflow-hidden">
                   <Badge variant="primary">
                     {provider.chapterList}
@@ -316,7 +315,7 @@ const ProviderCard = ({ provider,
                   </div>
                 )}
               </div>
-              <div className="flex flex-wrap gap-1 mt-1 min-w-0 overflow-hidden">
+              <div className="flex flex-wrap gap-1 mt-1 min-w-0 overflow-hidden justify-center sm:justify-start">
                 {provider.genre && provider.genre.length > 0 && (
                   provider.genre.map((genre) => (
                     <Badge key={genre} variant="primary" className="text-xs flex-shrink-0">
