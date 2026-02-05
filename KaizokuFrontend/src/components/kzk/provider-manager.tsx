@@ -116,12 +116,12 @@ function ProviderCard({
               ) : extension.installed ? (
                 <>
                   <Trash2 className="h-4 w-4" />
-                  {isCompact ? "Remove" : "Uninstall"}
+                  <span className="hidden sm:inline">{isCompact ? "Remove" : "Uninstall"}</span>
                 </>
               ) : (
                 <>
                   <Download className="h-4 w-4" />
-                  Install
+                  <span className="hidden sm:inline">Install</span>
                 </>
               )}
             </Button>
@@ -459,7 +459,7 @@ export function ProviderManager({
                 className="gap-2"
               >
                 <Upload className="h-4 w-4" />
-                {isUploadingApk ? 'Installing...' : 'Install From APK'}
+                <span className="hidden sm:inline">{isUploadingApk ? 'Installing...' : 'Install From APK'}</span>
               </Button>
             </div>
           </div>
