@@ -169,15 +169,15 @@ const ProviderCard = ({ provider,
   return (
     <Card className={`transition-all overflow-hidden bg-secondary ${provider.isDisabled ? "bg-opacity-50" : ""}`}>
       <div className="p-3 space-y-2 min-w-0 overflow-hidden relative">
-        {/* Action buttons - mobile: top, desktop: top-right absolute */}
-        <div className="flex flex-wrap gap-2 justify-end mb-2 sm:absolute sm:top-3 sm:right-3 sm:mb-0 sm:z-10">
+        {/* Action buttons - mobile/tablet: top row, desktop: top-right absolute */}
+        <div className="flex flex-wrap gap-2 justify-end mb-2 lg:absolute lg:top-3 lg:right-3 lg:mb-0 lg:z-10">
           <Button
             variant="destructive"
             size="sm"
             onClick={handleDelete}
           >
             <Trash2 className="h-4 w-4 mr-1" />
-            Delete
+            <span className="hidden sm:inline">Delete</span>
           </Button>
 
           {!provider.isUnknown && !provider.isUninstalled && (
@@ -187,7 +187,7 @@ const ProviderCard = ({ provider,
               onClick={handleEnableDisable}
             >
               <Power className="h-4 w-4 mr-1" />
-              {isEnabled ? "Disable" : "Enable"}
+              <span className="hidden sm:inline">{isEnabled ? "Disable" : "Enable"}</span>
             </Button>
           )}
 
@@ -199,14 +199,14 @@ const ProviderCard = ({ provider,
               disabled={isLoadingMatch}
             >
               <Search className="h-4 w-4 mr-1" />
-              {isLoadingMatch ? "Loading..." : "Match Source"}
+              <span className="hidden sm:inline">{isLoadingMatch ? "Loading..." : "Match Source"}</span>
             </Button>
           )}
         </div>
 
-        {/* Continue After Chapter input - mobile: below buttons, desktop: top-right */}
+        {/* Continue After Chapter input - mobile/tablet: below buttons, desktop: top-right */}
         {!provider.isUnknown && (
-          <div className="flex flex-wrap items-center gap-2 justify-end mb-2 sm:absolute sm:top-12 sm:right-3 sm:mb-0">
+          <div className="flex flex-wrap items-center gap-2 justify-end mb-2 lg:absolute lg:top-12 lg:right-3 lg:mb-0">
             <span className="text-muted-foreground text-sm">Continue After Chapter:</span>
             <Input
               type="number"
@@ -223,21 +223,21 @@ const ProviderCard = ({ provider,
         )}
 
         {/* Header section with thumbnail and info */}
-        <div className="flex flex-col sm:flex-row items-start gap-3 relative min-w-0 overflow-hidden">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 flex-1 min-w-0 overflow-hidden w-full">
+        <div className="flex flex-col md:flex-row items-start gap-3 relative min-w-0 overflow-hidden">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-3 flex-1 min-w-0 overflow-hidden w-full">
             {/* Provider Thumbnail */}
-            <div className="flex-shrink-0 w-full sm:w-auto flex justify-center sm:justify-start">
+            <div className="flex-shrink-0 w-full md:w-auto flex justify-center md:justify-start">
               <img
                 src={provider.thumbnailUrl || "/kaizoku-logo.png"}
                 alt={provider.title} style={{ aspectRatio: '4/6' }}
-                className="h-48 sm:h-68 max-w-[160px] sm:max-w-none object-cover rounded border"
+                className="h-48 md:h-68 max-w-[160px] md:max-w-none object-cover rounded border"
               />
             </div>
 
-            <div className="flex-1 space-y-2 min-w-0 overflow-hidden w-full text-center sm:text-left">              <div className="min-w-0 overflow-hidden">
+            <div className="flex-1 space-y-2 min-w-0 overflow-hidden w-full text-center md:text-left">              <div className="min-w-0 overflow-hidden">
               <CardTitle className="text-lg truncate">{provider.title}</CardTitle>
               { provider.url ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer hover:bg-accent/80 transition-colors min-w-0 overflow-hidden flex-wrap justify-center sm:justify-start"
+              <div className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer hover:bg-accent/80 transition-colors min-w-0 overflow-hidden flex-wrap justify-center md:justify-start"
                      onClick={(e) => {
                     e.stopPropagation();
                     if (provider.url) {
@@ -258,7 +258,7 @@ const ProviderCard = ({ provider,
                 </Badge>
               </div>
               ) : (
-                 <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0 overflow-hidden flex-wrap justify-center sm:justify-start">
+                 <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0 overflow-hidden flex-wrap justify-center md:justify-start">
                 <span className="text-lg truncate min-w-0">{provider.provider}{(provider.provider != provider.scanlator && provider.scanlator) ? ` • ${provider.scanlator}` : ''}</span>
                 <ReactCountryFlag
                   countryCode={getCountryCodeForLanguage(provider.lang)}
@@ -272,7 +272,7 @@ const ProviderCard = ({ provider,
                 </div>
               )}
             </div>{/* Stats grid */}
-              <div className="flex flex-wrap gap-2 mt-1 text-sm min-w-0 overflow-hidden justify-center sm:justify-start">
+              <div className="flex flex-wrap gap-2 mt-1 text-sm min-w-0 overflow-hidden justify-center md:justify-start">
                 <div className="min-w-0 overflow-hidden">
                   <Badge variant="primary">
                     {provider.chapterList}
@@ -315,7 +315,7 @@ const ProviderCard = ({ provider,
                   </div>
                 )}
               </div>
-              <div className="flex flex-wrap gap-1 mt-1 min-w-0 overflow-hidden justify-center sm:justify-start">
+              <div className="flex flex-wrap gap-1 mt-1 min-w-0 overflow-hidden justify-center md:justify-start">
                 {provider.genre && provider.genre.length > 0 && (
                   provider.genre.map((genre) => (
                     <Badge key={genre} variant="primary" className="text-xs flex-shrink-0">
