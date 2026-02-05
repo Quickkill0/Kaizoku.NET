@@ -109,5 +109,28 @@ namespace KaizokuBackend.Controllers
                 return StatusCode(500, new { error = "An error occurred while clearing downloads" });
             }
         }
+
+        /// <summary>
+        /// Removes a scheduled download from the queue
+        /// </summary>
+        [HttpDelete("{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult> RemoveScheduledDownloadAsync(Guid id, CancellationToken token = default)
+        {
+            try
+            {
+                bool removed = await _downloadCommand.RemoveScheduledDownloadAsync(id, token).ConfigureAwait(false);
+                if (!removed)
+                    return NotFound(new { error = "Download not found or not in waiting status" });
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error removing download {Id}: {Message}", id, ex.Message);
+                return StatusCode(500, new { error = "An error occurred while removing the download" });
+            }
+        }
     }
 }

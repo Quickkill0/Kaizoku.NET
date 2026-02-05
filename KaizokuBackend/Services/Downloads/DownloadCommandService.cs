@@ -359,6 +359,27 @@ namespace KaizokuBackend.Services.Downloads
         }
 
         /// <summary>
+        /// Removes a scheduled (waiting) download from the queue
+        /// </summary>
+        /// <param name="id">Download ID</param>
+        /// <param name="token">Cancellation token</param>
+        /// <returns>True if the download was removed, false if not found or not in waiting status</returns>
+        public async Task<bool> RemoveScheduledDownloadAsync(Guid id, CancellationToken token = default)
+        {
+            Enqueue? download = await _db.Queues
+                .Where(a => a.Id == id && a.JobType == JobType.Download && a.Status == QueueStatus.Waiting)
+                .FirstOrDefaultAsync(token).ConfigureAwait(false);
+
+            if (download == null)
+                return false;
+
+            _db.Queues.Remove(download);
+            await _db.SaveChangesAsync(token).ConfigureAwait(false);
+            _logger.LogInformation("Removed scheduled download {Id} from queue", id);
+            return true;
+        }
+
+        /// <summary>
         /// Manages error downloads by retrying or deleting them
         /// </summary>
         /// <param name="id">Download ID</param>
