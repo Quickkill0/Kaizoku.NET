@@ -390,9 +390,18 @@ const useSimpleImportState = () => {
     );
   }, []);
 
-  // Prevent propagation for switch changes (do nothing)
   const updateSeriesProperty = useCallback((path: string, seriesIndex: number, property: 'useCover' | 'isStorage' | 'useTitle', value: boolean) => {
-    // No-op: do not update parent state for switch changes
+    setImports(prev =>
+      prev.map(item => {
+        if (item.path !== path || !item.series) return item;
+        return {
+          ...item,
+          series: item.series.map((series, idx) =>
+            idx === seriesIndex ? { ...series, [property]: value } : series
+          )
+        };
+      })
+    );
   }, []);
 
   const replaceImport = useCallback((updatedImport: ImportInfo) => {
@@ -1045,11 +1054,26 @@ export function ConfirmImportsStep({ setError, setIsLoading, setCanProgress }: C
           }
         });
         delete debounceTimeoutsRef.current[path];
-      }, 5000);
+      }, 1500);
 
       return newImports;
     });
   }, [updateMutation, setError, refetch]);
+
+  // Flush all pending debounced saves on unmount to prevent data loss
+  useEffect(() => {
+    return () => {
+      Object.keys(debounceTimeoutsRef.current).forEach(path => {
+        clearTimeout(debounceTimeoutsRef.current[path]);
+        delete debounceTimeoutsRef.current[path];
+      });
+      // Flush the current global state to backend
+      globalImports.forEach(importItem => {
+        updateMutation.mutate(importItem);
+      });
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fetch imports on mount
   useEffect(() => {

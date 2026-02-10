@@ -262,6 +262,22 @@ export enum ProgressStatus {
   Failed = 3,
 }
 
+// Wizard Job Status (from GET /api/setup/job-status)
+export interface WizardJobStatus {
+  scanLocalFiles: number | null;
+  installAdditionalExtensions: number | null;
+  searchProviders: number | null;
+  importSeries: number | null;
+}
+
+// QueueStatus enum matching backend values
+export enum QueueStatus {
+  Waiting = 0,
+  Running = 1,
+  Completed = 2,
+  Failed = 3,
+}
+
 // Setup Wizard API Response Types
 export interface SetupOperationResponse {
   success: boolean;
