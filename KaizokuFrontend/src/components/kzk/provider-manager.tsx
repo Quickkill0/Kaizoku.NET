@@ -489,7 +489,6 @@ export function ProviderManager({
             />
           </div>
         </div>
-        {availableExtensions.length > 0 && (
           <div
             ref={availableContainerRef}
             className={`grid ${availableGridCols} gap-${isCompact ? '2' : '4'} ${availableMaxHeight ? `${availableMaxHeight} overflow-y-auto` : ''} ${hasAvailableScrollbar ? 'pr-2' : ''}`}>
