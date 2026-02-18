@@ -13,6 +13,10 @@ import { getCountryCodeForLanguage } from "@/lib/utils/language-country-mapping"
 import { LazyImage } from "@/components/ui/lazy-image";
 import { ProviderSettingsButton } from "@/components/kzk/provider-settings-button";
 import { ProviderPreferencesRequester } from "@/components/kzk/provider-preferences-requester";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { useSettings } from "@/lib/api/hooks/useSettings";
 
 interface ProviderCardProps {
   extension: Provider;
@@ -243,7 +247,10 @@ export function ProviderManager({
 
   // Filter available extensions based on search term
   const availableExtensions = useMemo(() => {
-    const available = extensions.filter(ext => !ext.installed);
+    let available = extensions.filter(ext => !ext.installed);
+    if (filteredLanguages && filteredLanguages.length > 0) {
+      available = available.filter(ext => filteredLanguages.includes(ext.lang));
+    }
     if (!searchTerm.trim()) {
       return available;
     }
@@ -252,9 +259,14 @@ export function ProviderManager({
       ext.name.toLowerCase().includes(search) ||
       ext.lang.toLowerCase().includes(search)
     );
-  }, [extensions, searchTerm]);
+  }, [extensions, searchTerm, filteredLanguages]);
 
   const availableTotalCount = extensions.filter(ext => !ext.installed).length;
+
+  const availableLanguageOptions = useMemo(() => {
+    const langs = new Set(extensions.filter(ext => !ext.installed).map(ext => ext.lang));
+    return Array.from(langs).sort().map(lang => ({ value: lang, label: lang }));
+  }, [extensions]);
 
   const handleInstall = async (pkgName: string) => {
     try {
@@ -482,10 +494,11 @@ export function ProviderManager({
             </div>
           )}
           <div className="w-48">
-            <MultiSelectLanguages
+            <MultiSelect
               options={availableLanguageOptions}
               selectedValues={filteredLanguages ?? []}
               onSelectionChange={setFilteredLanguages}
+              placeholder="Filter by language"
             />
           </div>
         </div>
