@@ -14,7 +14,7 @@ interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 export function LazyImage({ 
   src, 
   alt, 
-  fallbackSrc = '/kaizoku-logo.png',
+  fallbackSrc = '/kaizoku.net.png',
   className = '',
   loading = 'lazy',
   threshold = 0.1,

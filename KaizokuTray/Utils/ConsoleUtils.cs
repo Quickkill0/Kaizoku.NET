@@ -163,9 +163,9 @@ public static class ConsoleUtils
             
             // Try different possible resource names
             string[] possibleNames = {
-                "KaizokuTray.Assets.kaizoku-logo.ico",
-                "Assets.kaizoku-logo.ico",
-                "kaizoku-logo.ico"
+                "KaizokuTray.Assets.kaizoku.net.ico",
+                "Assets.kaizoku.net.ico",
+                "kaizoku.net.ico"
             };
             
             Stream? stream = null;
@@ -184,7 +184,7 @@ public static class ConsoleUtils
             
             if (stream == null)
             {
-                SafeWriteLine("Could not find any embedded resource for kaizoku-logo.ico");
+                SafeWriteLine("Could not find any embedded resource for kaizoku.net.ico");
                 SafeWriteLine($"Tried: {string.Join(", ", possibleNames)}");
                 return IntPtr.Zero;
             }

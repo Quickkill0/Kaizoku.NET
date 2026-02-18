@@ -78,7 +78,7 @@ const CloudLatestCard: React.FC<CloudLatestCardProps> = ({ item, cardWidth, text
   // Helper function to format thumbnail URL
   const formatThumbnailUrl = (thumbnailUrl?: string): string => {
     if (!thumbnailUrl) {
-      return '/kaizoku-logo.png';
+      return '/kaizoku.net.png';
     }
     
     // If it already starts with http, return as is
@@ -148,8 +148,8 @@ const CloudLatestCard: React.FC<CloudLatestCardProps> = ({ item, cardWidth, text
                 className="rounded-md object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  if (target.src !== window.location.origin + '/kaizoku-logo.png') {
-                    target.src = '/kaizoku-logo.png';
+                  if (target.src !== window.location.origin + '/kaizoku.net.png') {
+                    target.src = '/kaizoku.net.png';
                   }
                 }}
               />

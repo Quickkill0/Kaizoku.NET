@@ -172,8 +172,8 @@ export function ListSeries({ filterFn, sortFn, cardWidth = "w-40", cardWidthOpti
                 className="rounded-md object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  if (target.src !== window.location.origin + '/kaizoku-logo.png') {
-                    target.src = '/kaizoku-logo.png';
+                  if (target.src !== window.location.origin + '/kaizoku.net.png') {
+                    target.src = '/kaizoku.net.png';
                   }
                 }}
               />

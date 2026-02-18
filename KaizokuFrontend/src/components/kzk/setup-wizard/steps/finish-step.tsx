@@ -196,7 +196,7 @@ export function FinishStep({ setError, setIsLoading, setCanProgress, disableDown
                 </span>
               </div>
               <p className="text mb-4">
-                Congratulations! Your Kaizoku import wizard is now complete. 
+                Congratulations! Your Kaizoku.NET import wizard is now complete. 
               </p>
             </div>
           )}

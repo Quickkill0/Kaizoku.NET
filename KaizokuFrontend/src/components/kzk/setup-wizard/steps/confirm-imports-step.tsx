@@ -447,12 +447,12 @@ const ImportCard = React.memo(function ImportCard({ import: importItem, isUpdati
   const thumbnailSrc = preferredSeries?.thumbnailUrl;
 
   // --- Add local state for image src with fallback ---
-  const [imgSrc, setImgSrc] = React.useState<string>(thumbnailSrc || '/kaizoku-logo.png');
+  const [imgSrc, setImgSrc] = React.useState<string>(thumbnailSrc || '/kaizoku.net.png');
   React.useEffect(() => {
-    setImgSrc(thumbnailSrc || '/kaizoku-logo.png');
+    setImgSrc(thumbnailSrc || '/kaizoku.net.png');
   }, [thumbnailSrc]);
   const handleImgError = React.useCallback(() => {
-    setImgSrc('/kaizoku-logo.png');
+    setImgSrc('/kaizoku.net.png');
   }, []);
 
   // Local state for continueAfterChapter (like switches in SeriesCard)

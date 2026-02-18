@@ -5,7 +5,7 @@
         <FluentTheme />
     </Application.Styles>
     <Application.Resources>
-        <Image x:Key="TrayIcon" Source="/Assets/kaizoku-logo.ico" />
+        <Image x:Key="TrayIcon" Source="/Assets/kaizoku.net.ico" />
     </Application.Resources>
 
 </Application>

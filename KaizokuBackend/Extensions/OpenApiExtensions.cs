@@ -17,12 +17,12 @@ namespace KaizokuBackend
             {
                 options.SwaggerDoc("v1", new OpenApiInfo
                 {
-                    Title = "Kaizoku API",
+                    Title = "Kaizoku.NET API",
                     Version = "v1",
                     Description = "Series backend API",
                     Contact = new OpenApiContact
                     {
-                        Name = "Kaizoku Team"
+                        Name = "Kaizoku.NET Team"
                     }
                 });
 

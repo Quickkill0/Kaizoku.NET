@@ -10,11 +10,11 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <PackageIcon>kaizoku-logo.png</PackageIcon>
-	<ApplicationIcon>Assets\kaizoku-logo.ico</ApplicationIcon>
+    <PackageIcon>kaizoku.net.png</PackageIcon>
+	<ApplicationIcon>Assets\kaizoku.net.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="..\KaizokuFrontend\public\kaizoku-logo.png">
+    <None Include="..\KaizokuFrontend\public\kaizoku.net.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
@@ -43,11 +43,11 @@
 	</ItemGroup>
 
   <ItemGroup>
-    <None Remove="Assets\kaizoku-logo.ico" />
+    <None Remove="Assets\kaizoku.net.ico" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Assets\kaizoku-logo.ico">
+    <EmbeddedResource Include="Assets\kaizoku.net.ico">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>

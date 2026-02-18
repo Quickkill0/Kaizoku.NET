@@ -228,7 +228,7 @@ const ProviderCard = ({ provider,
             {/* Provider Thumbnail */}
             <div className="flex-shrink-0 w-full md:w-auto flex justify-center md:justify-start">
               <img
-                src={provider.thumbnailUrl || "/kaizoku-logo.png"}
+                src={provider.thumbnailUrl || "/kaizoku.net.png"}
                 alt={provider.title} style={{ aspectRatio: '4/6' }}
                 className="h-48 md:h-68 max-w-[160px] md:max-w-none object-cover rounded border"
               />
@@ -410,7 +410,7 @@ const ProviderCard = ({ provider,
 // Helper function to format thumbnail URL
 const formatThumbnailUrl = (thumbnailUrl?: string): string => {
   if (!thumbnailUrl) {
-    return '/kaizoku-logo.png';
+    return '/kaizoku.net.png';
   }
   
   // If it already starts with http, return as is
@@ -511,14 +511,14 @@ const DownloadItem = ({ download }: { download: DownloadInfo }) => {
       <CardHeader className="pb-2 p-2">
         <div className="flex items-start gap-3 min-w-0 overflow-hidden">
           <Image
-            src={download.thumbnailUrl ? formatThumbnailUrl(download.thumbnailUrl) : '/kaizoku-logo.png'}
+            src={download.thumbnailUrl ? formatThumbnailUrl(download.thumbnailUrl) : '/kaizoku.net.png'}
             alt={download.title || 'Download'}
             width={60}
             height={80}
             className="rounded-md object-cover flex-shrink-0"
             onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
               const target = e.target as HTMLImageElement;
-              target.src = '/kaizoku-logo.png';
+              target.src = '/kaizoku.net.png';
             }}
           />
           <div className="flex-1 min-w-0 overflow-hidden">
@@ -1787,7 +1787,7 @@ function SeriesPageContent() {
             <div className="flex flex-col md:flex-row gap-4 min-w-0 overflow-hidden">
               {/* Poster */}
               <div className="flex-shrink-0 mx-auto md:mx-0">
-                <img src={displayThumbnail || "/kaizoku-logo.png"}
+                <img src={displayThumbnail || "/kaizoku.net.png"}
                   alt={displayTitle}
                   style={{ aspectRatio: '4/6' }}
                   className="h-64 md:h-96 object-cover rounded-lg border"

@@ -92,7 +92,7 @@ export default function AddProvidersStep({
           <>
 Install sources to access different websites. At least one source is required to continue. It's recommended to install enough sources to cover all your series.<br/>
 After installation, adjust each source's settings. Be sure to choose whether each source is temporary or permanent, depending on how you plan to store the data.<br/>
-If the storage folder was previously used in Kaizoku, your previously installed sources will be restored automatically in the next step.
+If the storage folder was previously used in Kaizoku.NET, your previously installed sources will be restored automatically in the next step.
           </>
         }        onError={handleError}
         onLoadingChange={handleLoadingChange}
