@@ -463,8 +463,7 @@ export function ProviderManager({
               </Button>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4">
           {nsfwVisibility !== NsfwVisibility.AlwaysHide && (
             <div className="flex items-center gap-1.5">
               <Checkbox
