@@ -146,7 +146,7 @@ namespace RensaioBackend.Services.Downloads
             if (p != null)
                 maxChap = p.Chapters.Max(c => c.Number);
 
-            string zipFile = ArchiveHelperService.MakeFileNameSafe(ch.ProviderName, ch.Scanlator, ch.SeriesTitle, ch.Language, ch.Chapter.ParsedNumber, rchap, maxChap) + ".cbz";
+            string zipFile = ArchiveHelperService.MakeFileNameSafe(ch.ProviderName, ch.Scanlator, ch.Title, ch.Language, ch.Chapter.ParsedNumber, rchap, maxChap) + ".cbz";
             string message = $"Downloading ({providerName}) {ch.Title} {chapterName}...";
             reporter.Report(ProgressStatus.Started, 0, message, downloadSummary);
 
@@ -191,7 +191,7 @@ namespace RensaioBackend.Services.Downloads
                                     _logger.LogWarning("Page {Page} of chapter {ChapterNumber} of series {SeriesTitle} is not a valid image", page + 1, ch.Chapter.ParsedNumber, ch.Title);
                                     ext = ".unk";
                                 }
-                                string fileName = ArchiveHelperService.MakeFileNameSafe(ch.ProviderName, ch.Scanlator, ch.SeriesTitle, ch.Language,
+                                string fileName = ArchiveHelperService.MakeFileNameSafe(ch.ProviderName, ch.Scanlator, ch.Title, ch.Language,
                                             ch.Chapter.ParsedNumber, ch.ChapterName, maxChap, page + 1, ch.PageCount) + ext;
                                 await zipWriter.WriteAsync(fileName, image).ConfigureAwait(false);
                                 acum += step;
