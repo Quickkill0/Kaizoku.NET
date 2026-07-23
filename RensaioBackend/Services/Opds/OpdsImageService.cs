@@ -100,33 +100,51 @@ public class OpdsImageService
             if (pageIndex < state.Pages.Count)
             {
                 string entryKey = state.Pages[pageIndex].Replace('/', System.IO.Path.DirectorySeparatorChar);
-                string pageFile = System.IO.Path.Combine(cacheDir, entryKey);
-                if (File.Exists(pageFile))
+                string? pageFile = ResolvePageFile(cacheDir, entryKey);
+                if (pageFile != null)
                 {
                     return await ReadAndConvertPageAsync(pageFile, supportedImageFormats, seriesStoragePath, chapterFilename, pageIndex, token);
                 }
             }
         }
-        else if (Directory.Exists(cacheDir))
+        else if (OpdsExtractionCoordinator.IsChapterCacheComplete(cacheDir))
         {
-            // Fallback: no active state, but cache dir exists — scan it directly
-            // Account for multiple extensions due to format conversions
+            // Fallback: no active state, but the chapter is fully cached — scan it directly.
+            // Partial directories (canceled/failed extraction) have no completion marker
+            // and fall through to extraction below, which resumes from existing files.
             return await ReadPageFromCacheDirAsync(cacheDir, pageIndex, supportedImageFormats, seriesStoragePath, chapterFilename, token);
         }
 
         // ── Ensure extraction is running for this chapter ──
         // If there's no active extraction for this exact chapter, cancel any other
         // extraction for this user and start one for the requested chapter.
+        // Serialized per chapter so parallel page requests from a reader don't
+        // each cancel the others' just-started extraction.
         if (!_coordinator.TryGetExtraction(userKey, out state) ||
             state.ChapterCacheKey != cacheKey ||
             state.ExtractionTask is { IsCompleted: true })
         {
-            _coordinator.CancelActiveExtraction(userKey);
+            var chapterLock = _coordinator.GetChapterLock(cacheKey);
+            await chapterLock.WaitAsync(token);
+            try
+            {
+                // Re-check under the lock — a concurrent request may have started it
+                if (!_coordinator.TryGetExtraction(userKey, out state) ||
+                    state.ChapterCacheKey != cacheKey ||
+                    state.ExtractionTask is { IsCompleted: true })
+                {
+                    _coordinator.CancelActiveExtraction(userKey);
 
-            // Setup extraction (DB lookup, pages, signals) and fire the task without awaiting it.
-            // The state is stored in the coordinator so we can wait for the page signal.
-            state = await SetupAndFireExtractionAsync(
-                userKey, seriesId, name, cacheKey, cacheDir, archivePath, chapterFilename, seriesStoragePath, supportedImageFormats);
+                    // Setup extraction (DB lookup, pages, signals) and fire the task without awaiting it.
+                    // The state is stored in the coordinator so we can wait for the page signal.
+                    state = await SetupAndFireExtractionAsync(
+                        userKey, seriesId, name, cacheKey, cacheDir, archivePath, chapterFilename, seriesStoragePath, supportedImageFormats);
+                }
+            }
+            finally
+            {
+                chapterLock.Release();
+            }
 
             if (state == null)
                 return (null, null, null);
@@ -151,9 +169,11 @@ public class OpdsImageService
                     return (null, null, null);
                 }
 
-                // Read the file now that it's ready — run conversion if needed
-                string pageFile = System.IO.Path.Combine(cacheDir, entryKey);
-                if (File.Exists(pageFile))
+                // Read the file now that it's ready — run conversion if needed.
+                // The extracted file may have a different extension than the archive
+                // entry: format conversion replaces the original (e.g. .webp → .jpg).
+                string? pageFile = ResolvePageFile(cacheDir, entryKey);
+                if (pageFile != null)
                 {
                     return await ReadAndConvertPageAsync(pageFile, supportedImageFormats, seriesStoragePath, chapterFilename, pageIndex, token);
                 }
@@ -227,8 +247,8 @@ public class OpdsImageService
         string cacheKey = $"{seriesId}:{language}:{chapterFilename}";
         string cacheDir = GetCacheDirectory(seriesId, language, chapterFilename);
 
-        // Already cached – nothing to do
-        if (Directory.Exists(cacheDir) && Directory.GetFiles(cacheDir).Length > 0)
+        // Already fully cached – nothing to do (a partial dir without the marker re-extracts and resumes)
+        if (OpdsExtractionCoordinator.IsChapterCacheComplete(cacheDir))
             return Task.CompletedTask;
         // Resolve the full archive path before extraction
         string? archivePath = _settingsService.DirectSettings?.ResolveChapterPath(seriesStoragePath, chapterFilename);
@@ -237,6 +257,14 @@ public class OpdsImageService
             _logger.LogWarning("Archive not found for chapter {Filename} in series {title}",
                 chapterFilename, seriesId);
             return Task.CompletedTask;
+        }
+
+        // This exact chapter is already being extracted – just wait for it
+        if (_coordinator.TryGetExtraction(userKey, out var active) &&
+            active.ChapterCacheKey == cacheKey &&
+            active.ExtractionTask is { IsCompleted: false } activeTask)
+        {
+            return activeTask;
         }
 
         // Cancel any existing preload for this user
@@ -319,8 +347,14 @@ public class OpdsImageService
             string cacheKey = $"{seriesId}:{lang}:{chapterFilename}";
             string cacheDir = GetCacheDirectory(seriesId, lang, chapterFilename);
 
-            // Already cached – nothing to do
-            if (Directory.Exists(cacheDir) && Directory.GetFiles(cacheDir).Length > 0)
+            // Already fully cached – nothing to do
+            if (OpdsExtractionCoordinator.IsChapterCacheComplete(cacheDir))
+                return;
+
+            // An extraction is already running for this user (likely the chapter
+            // they are reading right now) — a background preload must not steal it
+            if (_coordinator.TryGetExtraction(userKey, out var active) &&
+                active.ExtractionTask is { IsCompleted: false })
                 return;
 
             // Resolve the full archive path before extraction
@@ -332,7 +366,7 @@ public class OpdsImageService
                 return;
             }
 
-            // Cancel any previous extraction for this user
+            // Clear any completed extraction state for this user
             _coordinator.CancelActiveExtraction(userKey);
 
             await StartExtractionAsync(userKey, seriesId, name, cacheKey, cacheDir, archivePath, chapterFilename, seriesStoragePath, supportedImageFormats);
@@ -409,8 +443,8 @@ public class OpdsImageService
             string cacheKey = $"{seriesId}:{lang}:{chapterFilename}";
             string cacheDir = GetCacheDirectory(seriesId, lang, chapterFilename);
 
-            // Already cached – nothing to do
-            if (Directory.Exists(cacheDir) && Directory.GetFiles(cacheDir).Length > 0)
+            // Already fully cached – nothing to do
+            if (OpdsExtractionCoordinator.IsChapterCacheComplete(cacheDir))
                 return;
 
             // Wait for any current extraction for this user to finish
@@ -430,6 +464,12 @@ public class OpdsImageService
                     chapterFilename, name);
                 return;
             }
+
+            // If a new extraction started while we were waiting (the user began
+            // reading something), don't steal it for a background preload
+            if (_coordinator.TryGetExtraction(userKey, out var newActive) &&
+                newActive.ExtractionTask is { IsCompleted: false })
+                return;
 
             // Start extraction of the next chapter
             _coordinator.CancelActiveExtraction(userKey);
@@ -569,8 +609,19 @@ public class OpdsImageService
         // Build a lookup set for faster matching
         var pageSet = new HashSet<string>(state.Pages, StringComparer.OrdinalIgnoreCase);
 
+        // Serialize extraction per chapter: two users (or a raced restart) targeting
+        // the same chapter share the cache directory, and concurrent writes to the
+        // same files cause sharing violations on Windows. The second extractor
+        // acquires the lock after the first finishes and cheaply skips existing files.
+        var chapterLock = _coordinator.GetChapterLock(state.ChapterCacheKey);
+        bool lockTaken = false;
+        bool anyPageFailed = false;
+
         try
         {
+            await chapterLock.WaitAsync(cts.Token);
+            lockTaken = true;
+
             var archive = await SharpCompress.Archives.ArchiveFactory.OpenAsyncArchive(archivePath);
             var allEntries = archive.EntriesAsync;
 
@@ -583,16 +634,58 @@ public class OpdsImageService
 
                 string entryKey = entry.Key?.Replace('/', System.IO.Path.DirectorySeparatorChar) ?? "";
                 string fullPath = System.IO.Path.Combine(cacheDir, entryKey);
+                bool isPage = pageSet.Contains(entryKey);
 
-                // Create subdirectories if needed
-                string? dir = System.IO.Path.GetDirectoryName(fullPath);
-                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                    Directory.CreateDirectory(dir);
+                // Resume support: skip entries already extracted (or extracted+converted)
+                // by a previous run of this chapter
+                if (ResolvePageFile(cacheDir, entryKey) != null)
+                {
+                    if (isPage && state.PageSignals.TryGetValue(entryKey, out var doneTcs))
+                        doneTcs.TrySetResult();
+                    continue;
+                }
 
-                await entry.WriteToFileAsync(fullPath, null, cts.Token);
+                try
+                {
+                    // Create subdirectories if needed
+                    string? dir = System.IO.Path.GetDirectoryName(fullPath);
+                    if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                        Directory.CreateDirectory(dir);
+
+                    // Write to a temp file and move into place so a cancel/crash
+                    // never leaves a truncated page behind for a later resume to trust
+                    string tempPath = fullPath + ".tmp";
+                    try
+                    {
+                        await entry.WriteToFileAsync(tempPath, null, cts.Token);
+                        File.Move(tempPath, fullPath, overwrite: true);
+                    }
+                    catch
+                    {
+                        try { File.Delete(tempPath); } catch { /* best effort */ }
+                        throw;
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    // One bad entry must not fail the rest of the chapter:
+                    // fail only this page's signal and keep extracting
+                    _logger.LogWarning(ex, "Failed to extract entry {EntryKey} from {ArchivePath}", entryKey, archivePath);
+                    if (isPage)
+                    {
+                        anyPageFailed = true;
+                        if (state.PageSignals.TryGetValue(entryKey, out var failedTcs))
+                            failedTcs.TrySetException(ex);
+                    }
+                    continue;
+                }
 
                 // Convert image format if needed and client has format preferences
-                if (state.SupportedImageFormats.Count > 0 && pageSet.Contains(entryKey))
+                if (state.SupportedImageFormats.Count > 0 && isPage)
                 {
                     try
                     {
@@ -610,8 +703,7 @@ public class OpdsImageService
                 }
 
                 // Signal this specific page if it's in our Pages list
-                if (pageSet.Contains(entryKey) &&
-                    state.PageSignals.TryGetValue(entryKey, out var tcs))
+                if (isPage && state.PageSignals.TryGetValue(entryKey, out var tcs))
                 {
                     tcs.TrySetResult();
                 }
@@ -620,45 +712,55 @@ public class OpdsImageService
             // After all entries processed, signal any remaining pages that weren't found
             foreach (var kvp in state.PageSignals)
             {
-                kvp.Value.TrySetException(new InvalidOperationException(
-                    $"Page entry '{kvp.Key}' was not found in the archive"));
+                if (kvp.Value.TrySetException(new InvalidOperationException(
+                        $"Page entry '{kvp.Key}' was not found in the archive")))
+                {
+                    anyPageFailed = true;
+                }
             }
 
             // Only manage cache if extraction completed successfully (not canceled)
             if (!cts.Token.IsCancellationRequested)
             {
+                if (!anyPageFailed)
+                    OpdsExtractionCoordinator.MarkChapterCacheComplete(cacheDir);
                 await ManageCacheSizeAsync();
             }
         }
         catch (OperationCanceledException)
         {
-            // On cancel, set all pending signals as canceled
+            // On cancel, set all pending signals as canceled.
+            // The partial cache is kept — files are written atomically, so a later
+            // extraction of this chapter resumes from them.
             foreach (var kvp in state.PageSignals)
             {
                 kvp.Value.TrySetCanceled(cts.Token);
             }
-            // Clean up partial cache on cancellation
-            OpdsExtractionCoordinator.DeleteCacheDirectory(cacheDir);
             throw;
         }
         catch (Exception ex)
         {
-            // On failure, set all pending signals with the exception
+            // On failure (e.g. the archive itself can't be opened), set all pending
+            // signals with the exception. Already-extracted pages stay on disk.
             foreach (var kvp in state.PageSignals)
             {
                 kvp.Value.TrySetException(ex);
             }
-            OpdsExtractionCoordinator.DeleteCacheDirectory(cacheDir);
             throw;
         }
         finally
         {
+            if (lockTaken)
+                chapterLock.Release();
+
             // Only remove our own state if it hasn't been replaced
             if (_coordinator.TryGetExtraction(userKey, out var current) &&
                 ReferenceEquals(current, state))
             {
                 _coordinator.TryRemoveExtraction(userKey, out _);
             }
+
+            cts.Dispose();
         }
     }
 
@@ -723,7 +825,8 @@ public class OpdsImageService
         string seriesStoragePath, string chapterFilename,
         CancellationToken token)
     {
-        string[] allFiles = Directory.GetFiles(cacheDir)
+        // Recursive: archives can contain images inside subdirectories
+        string[] allFiles = Directory.GetFiles(cacheDir, "*", SearchOption.AllDirectories)
             .Where(f => ArchiveHelperService.ArchiveIsImage(f))
             .OrderBy(f => f, new NaturalSortComparer())
             .ToArray();
@@ -731,10 +834,11 @@ public class OpdsImageService
         if (allFiles.Length == 0 || pageIndex >= allFiles.Length)
             return (null, null, null);
 
-        // Group files by their base name (without extension) to handle
-        // multiple format variants of the same page
+        // Group files by their extension-less path relative to the cache dir to
+        // handle multiple format variants of the same page
         var groupedFiles = allFiles
-            .GroupBy(f => System.IO.Path.GetFileNameWithoutExtension(f), StringComparer.OrdinalIgnoreCase)
+            .GroupBy(f => System.IO.Path.ChangeExtension(System.IO.Path.GetRelativePath(cacheDir, f), null),
+                StringComparer.OrdinalIgnoreCase)
             .OrderBy(g => g.Key, new NaturalSortComparer())
             .ToList();
 
@@ -786,7 +890,36 @@ public class OpdsImageService
         return (stream, contentType, md5Hash);
     }
 
-    
+    /// <summary>
+    /// Resolves the on-disk file for an archive entry key, accounting for format
+    /// conversion: <see cref="ImageExtensions.CreateImageFileFormatIfNeeded"/> deletes
+    /// the original after converting, so the cached file may have a different
+    /// extension (e.g. entry "001.webp" exists on disk only as "001.jpg").
+    /// Returns null if neither the original nor a converted variant exists.
+    /// </summary>
+    private static string? ResolvePageFile(string cacheDir, string entryKey)
+    {
+        string exact = System.IO.Path.Combine(cacheDir, entryKey);
+        if (File.Exists(exact))
+            return exact;
+
+        string? dir = System.IO.Path.GetDirectoryName(exact);
+        if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir))
+            return null;
+
+        string baseName = System.IO.Path.GetFileNameWithoutExtension(exact);
+        foreach (string candidate in Directory.EnumerateFiles(dir, baseName + ".*"))
+        {
+            if (ArchiveHelperService.ArchiveIsImage(candidate) &&
+                string.Equals(System.IO.Path.GetFileNameWithoutExtension(candidate), baseName, StringComparison.OrdinalIgnoreCase))
+            {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+
 
     // ──────────────────────────────────────────────────────────────────────────
     // Cache management
@@ -829,6 +962,11 @@ public class OpdsImageService
             var oldest = chapterDirs.First();
             try
             {
+                // Remove the completion marker first: if the recursive delete then
+                // fails partway (a page file is open on Windows), the leftover
+                // directory is correctly seen as partial and re-extracted, instead
+                // of being trusted as a complete chapter with missing pages
+                File.Delete(System.IO.Path.Combine(oldest, OpdsExtractionCoordinator.CompleteMarkerFileName));
                 Directory.Delete(oldest, true);
             }
             catch { }
